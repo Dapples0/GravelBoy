@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <array>
+#include <memory>
 
 #include "constants.h"
 #include "APU.h"
@@ -14,11 +15,13 @@
 
 class MMU {
     public:
-        MMU();
-        ~MMU();
+        // MMU();
+        // ~MMU();
 
+        void connect(GPU *gpu, Joypad *joypad, Timer *timer, APU *apu);
+        void loadRom(const char *filename);
     private:
-        Cartridge *rom; // ROM Banks + External RAM
+        std::unique_ptr<Cartridge> rom; // ROM Banks + External RAM
         GPU *gpu; // VRAM + Echo RAM + OAM
         Joypad *joypad; // Input
         Timer *timer; // Timer
@@ -38,6 +41,7 @@ class MMU {
         uint8_t ie;
         uint8_t ieFlag;
 
+        void setMBC(int type, std::vector<uint8_t> romData, int romSize);
 };
 
 

@@ -1,5 +1,5 @@
 #ifndef APU_H
-#define APU_h
+#define APU_H
 
 
 class APU {

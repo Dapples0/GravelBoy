@@ -14,6 +14,7 @@ class gb {
         gb();
         ~gb();
 
+        void run(const char *filename);
         const int WIDTH = 160;
         const int HEIGHT = 144;
 

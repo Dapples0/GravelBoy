@@ -3,7 +3,6 @@
 
 #include <vector>
 
-#include "MBC.h"
 #include "constants.h"
 
 class Cartridge {
@@ -14,11 +13,12 @@ class Cartridge {
     private:
         // ROM Banks
         std::vector<std::vector<uint8_t>> romBank;
+        uint8_t mbcType;
 
-        // Catridge Ram Banks
+        // Catridge External Ram Banks
         std::vector<std::vector<uint8_t>> ramBank;
 
-        uint8_t mbcType;
+        
 };
 
 

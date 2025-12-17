@@ -8,6 +8,7 @@ class CPU {
         CPU();
         ~CPU();
 
+        // void connect(MMU *mmu);
     private:
         MMU *mmu;
         

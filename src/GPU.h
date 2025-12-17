@@ -1,5 +1,5 @@
 #ifndef GPU_H
-#define GPU_h
+#define GPU_H
 
 
 class GPU {

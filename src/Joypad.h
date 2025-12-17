@@ -1,5 +1,5 @@
 #ifndef JOYPAD_H
-#define JOYPAD_h
+#define JOYPAD_H
 
 
 class Joypad {
