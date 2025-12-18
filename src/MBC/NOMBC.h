@@ -5,12 +5,13 @@
 
 class NOMBC : public Cartridge {
     public:
-        NOMBC(std::vector<uint8_t> romData, int romSize);
+        NOMBC();
         ~NOMBC();
 
+        uint8_t read(uint16_t address) override;
+        void write(uint16_t address, uint8_t data) override;        
     private:
-        std::vector<uint8_t> romData;
-        int romSize;
+        int romSize = 32; // KB
 };
 
 

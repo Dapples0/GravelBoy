@@ -26,19 +26,22 @@ void MMU::loadRom(const char *filename) {
     std::ifstream file;
     std::ifstream stream(filename, std::ios::binary | std::ios::ate);
     int romSize;
-    std::vector<uint8_t> romData;
+    int currentRomBank;
+    std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData; // Initial ROM Bank
 
     if (stream.is_open()) {
         char byte;
         romSize = (int)stream.tellg();
-        std::cout << romSize << "\n";
-        romData = std::vector<u_int8_t>(romSize);
-
+        std::cout << romSize << "\n"; // File size
+        romData = std::vector<std::array<uint8_t, ROM_BANK_SIZE>>(romSize / (ROM_BANK_SIZE));
+        
         stream.seekg(0, std::ios::beg);
+
         for (int i = 0; i < romSize; i++) {
+            currentRomBank = i / ROM_BANK_SIZE;
             char byte;
             stream.get(byte);
-            romData[i] = byte;
+            romData[currentRomBank][i % ROM_BANK_SIZE]= byte;
         }
         stream.close();
     } else {
@@ -50,42 +53,42 @@ void MMU::loadRom(const char *filename) {
 	char title[17];
 	title[16] = 0x00;
 	for (int i = 0; i < 16; i++) {
-		title[i] = (char)romData[0x134 + i];
+		title[i] = (char)romData[0][0x134 + i];
 	}
 	std::cout << "Title: " << title << "\n";
 
-    int cgb = (int)romData[0x143];
+    int cgb = (int)romData[0][0x143];
 
     std::cout << "CGB Flag: " << cgb << "\n";
 
     // Sanity Check - MBC type
-    int type = (int)romData[0x147];
+    int type = (int)romData[0][0x147];
     std::cout << "Catridge Type: " << type << "\n";
 
     // Remember to save battery here as it is for save states
 
     // Sanity Check - SRAM Size
-    int sRamSize = (int)romData[0x149];
+    int sRamSize = (int)romData[0][0x149];
 
     std::cout << "SRAM Size: " << sRamSize << "\n";
 
     // Sanity Check - ROM Size
-	int headerRomSize = (int)romData[0x148];
+	int headerRomSize = (int)romData[0][0x148];
 	// Print
 	std::cout << "ROM Size: " << 32 * (1 << headerRomSize) << "KB\n";
 
 
     // Determines MBC Type
-    setMBC(type, romData, romSize);
+    setMBC(type, romData);
 
 
 }
 
-void MMU::setMBC(int type, std::vector<uint8_t> romData, int romSize) {
+void MMU::setMBC(int type, std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData) {
     switch (type) {
         case 0x00: // ROM ONLY
             std::cout << "MBC Type: NOMBC\n";
-            // this->rom = std::make_unique<NOMBC>(romData, romSize);
+            this->rom = std::make_unique<NOMBC>();
             break;
 
 
