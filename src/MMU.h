@@ -19,7 +19,7 @@ class MMU {
         // ~MMU();
 
         void connect(GPU *gpu, Joypad *joypad, Timer *timer, APU *apu);
-        void loadRom(const char *filename);
+        int loadRom(const char *filename);
         uint8_t read8(uint16_t address);
         void write8(uint16_t address, uint8_t data);
     private:
@@ -40,10 +40,10 @@ class MMU {
         std::array<uint8_t, 0x7F> hram;
 
         // Interrupt Enable Registers
-        uint8_t ie;
-        uint8_t ieFlag;
+        uint8_t ie = 0x00;
+        uint8_t ieFlag = 0x00;
 
-        void setMBC(int type, std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData);
+        void setMBC(int type, std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int sRamSize);
 };
 
 

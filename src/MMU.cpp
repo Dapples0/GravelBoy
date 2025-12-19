@@ -21,7 +21,7 @@ void MMU::connect(GPU *gpu, Joypad *joypad, Timer *timer, APU *apu) {
 
 }
 
-void MMU::loadRom(const char *filename) {
+int MMU::loadRom(const char *filename) {
 
     std::ifstream file;
     std::ifstream stream(filename, std::ios::binary | std::ios::ate);
@@ -69,8 +69,9 @@ void MMU::loadRom(const char *filename) {
 
     // Sanity Check - SRAM Size
     int sRamSize = (int)romData[0][0x149];
-
     std::cout << "SRAM Size: " << sRamSize << "\n";
+
+    
 
     // Sanity Check - ROM Size
 	int headerRomSize = (int)romData[0][0x148];
@@ -79,16 +80,17 @@ void MMU::loadRom(const char *filename) {
 
 
     // Determines MBC Type
-    setMBC(type, romData);
+    setMBC(type, romData, sRamSize);
 
+    return cgb;
 
 }
 
-void MMU::setMBC(int type, std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData) {
+void MMU::setMBC(int type, std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int sRamSize) {
     switch (type) {
         case 0x00: // ROM ONLY
             std::cout << "MBC Type: NOMBC\n";
-            this->rom = std::make_unique<NOMBC>();
+            this->rom = std::make_unique<NOMBC>(romData, sRamSize);
             break;
 
 
@@ -99,4 +101,63 @@ void MMU::setMBC(int type, std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romDa
             std::cout << "No MBC type found, defaulting to MBC1\n";
             break;
     }
+}
+
+
+uint8_t MMU::read8(uint16_t address)
+{
+    // REMEMBER TO CONSIDER OFFSETS
+    // ROM Bank
+    if (address <= 0x7FFF) {
+        return this->rom->read(address);
+    }
+    
+    // VRAM
+    if (address <= 0x9FFF) {
+        return 0;
+    }
+
+    // External RAM
+    if (address <= 0xBFFF) {
+        return 0;
+    }
+
+    // WRAM
+    if (address <= 0xDFFF) {
+        return 0;
+    }
+
+    // Echo RAM
+    if (address <= 0xFDFF) {
+        return 0;
+    }
+
+    // OAM RAM
+    if (address <= 0xFE9F) {
+        return 0;
+    }
+
+    // I/O Registers
+    if (address <= 0xFF7F) {
+        return 0;
+    }
+
+    // High RAM
+    if (address <= 0xFFFE) {
+        return 0;
+    }
+
+    // IE
+    if (address == 0xFFFF) {
+        return 0;
+    }
+
+    // Invalid Read
+    return 0;
+}
+
+
+
+void MMU::write8(uint16_t address, uint8_t data)
+{
 }
