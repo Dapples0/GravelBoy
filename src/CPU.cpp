@@ -25,7 +25,6 @@ void CPU::execute() {
 }
 
 void CPU::executeInstruction(uint8_t opcode) {
-    uint8_t oldPC = pc; // For passing into 0xCB prefix instruction set
     pc++;
     switch (opcode) {
         case 0xCB: // 0xCB Prefixed
@@ -354,3 +353,100 @@ void CPU::CP(uint8_t val) {
 // void CPU::setCSbc(uint8_t left, uint8_t right, uint8_t carry) {
 //     setC(left < (right + carry));
 // }
+
+uint8_t CPU::RES(uint8_t pos, uint8_t reg) {
+    uint8_t mask = ~(1 << pos);
+    
+    return reg &= mask;
+}
+
+uint8_t CPU::RLC(uint8_t val) {
+    uint8_t carry = (val & 0x80) >> 7;
+    uint8_t res = (val << 1) | carry;
+
+    setC((val & 0x80) != 0);
+    setN(false);
+    setH(false);
+    setZ(res == 0);
+    return res;
+}
+
+uint8_t CPU::RRC(uint8_t val) {
+    uint8_t carry = (val & 0x01);
+    uint8_t res = (val >> 1) | (carry << 7);
+
+    setC(carry != 0);
+    setN(false);
+    setH(false);
+    setZ(res == 0);
+    return res;
+}
+
+uint8_t CPU::RL(uint8_t val) {
+    uint8_t cFlag = (uint8_t)getC();
+    uint8_t carry = (val & 0x80);
+    uint8_t res = (val << 1) | cFlag;
+
+    setC(carry != 0);
+    setN(false);
+    setH(false);
+    setZ(res == 0);
+    return res;
+}
+
+uint8_t CPU::RR(uint8_t val) {
+    uint8_t cFlag = (uint8_t)getC();
+    uint8_t carry = (val & 0x01);
+    uint8_t res = (val >> 1) | (cFlag << 7);
+
+    setC(carry != 0);
+    setN(false);
+    setH(false);
+    setZ(res == 0);
+    return res;
+}
+
+uint8_t CPU::SRA(uint8_t val) {
+    uint8_t sign = (val & 0x80);
+    uint8_t carry = (val & 0x01);
+    uint8_t res = (val >> 1) | sign;
+    setC(carry != 0);
+    setN(false);
+    setH(false);
+    setZ(res == 0);
+    return res;
+}
+
+uint8_t CPU::SLA(uint8_t val) {
+    uint8_t res = val << 1;
+
+    setC((val & 0x80) != 0);
+    setN(false);
+    setH(false);
+    setZ(res == 0);
+    return res;
+}
+
+uint8_t CPU::SRL(uint8_t val)
+{
+    uint8_t carry = (val & 0x01);
+    uint8_t res = (val >> 1);
+
+    setC(carry != 0);
+    setN(false);
+    setH(false);
+    setZ(res == 0);
+    return res;
+}
+
+uint8_t CPU::SET(uint8_t pos, uint8_t reg) {
+    return reg | (0x01 << pos);
+}
+
+void CPU::BIT(uint8_t pos, uint8_t reg) {
+    setN(false);
+    setH(true);
+    setZ((reg & (0x01 << pos)) == 0);
+}
+
+

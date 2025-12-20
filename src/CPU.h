@@ -79,15 +79,16 @@ class CPU {
         void CP(uint8_t val);
 
         // 0xCB Generic Instructions
-        void RES();
-        void SET();
-        void SLA();
-        void RLC();
-        void RR();
-        void SRA();
-        void SRL();
-        void BIT();
-        void RES();
+        uint8_t RES(uint8_t pos, uint8_t reg);
+        uint8_t RLC(uint8_t val);
+        uint8_t RRC(uint8_t val);
+        uint8_t RL(uint8_t val);
+        uint8_t RR(uint8_t val);
+        uint8_t SRA(uint8_t val);
+        uint8_t SLA(uint8_t val);
+        uint8_t SRL(uint8_t val);        
+        uint8_t SET(uint8_t pos, uint8_t reg);
+        void BIT(uint8_t pos, uint8_t reg);
 
 
         // Flag helpers
