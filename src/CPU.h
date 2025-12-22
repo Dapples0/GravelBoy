@@ -36,6 +36,7 @@ class CPU {
         bool ime;
 
         int CGBMode;
+        bool doubleSpeed;
 
         void resetGB();
         void resetCGB();

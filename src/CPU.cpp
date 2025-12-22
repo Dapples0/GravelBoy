@@ -26,41 +26,301 @@ void CPU::execute() {
 
 void CPU::executeInstruction(uint8_t opcode) {
     pc++;
+
+    // Instructions Done 51/256
     switch (opcode) {
         case 0xCB: // 0xCB Prefixed
             break;
+
+        /**
+         * Misc Instructions
+         */
         case 0x00: // NOP
+            // Do nothing
             break;
-        case 0x01:
+        case 0x27: // DAA
+            uint8_t adjustment = 0x00;
+            if (getN()) {
+                if (getH()) {
+                    adjustment += 0x06;
+                }
+
+                if (getC()) {
+                    adjustment += 0x60;
+                }
+
+                registers[REG_A] -= adjustment;
+
+
+            } else {
+                if (getH() || (registers[REG_A] & 0x0F > 0x09)) adjustment += 0x06;
+
+                if (getC() || (registers[REG_A] > 0x99))  {
+                    adjustment += 0x60;
+                    setC(true);
+                }
+                
+                registers[REG_A] += adjustment;
+            }
+
+            setH(false);
+            setZ(registers[REG_A] == 0);
 
             break;
 
-        // ADD
+        case 0x10: // STOP - NOTES: As per pandocs: licensed roms do not use STOP outside of GCB speed switching. So implementing DMG slow mode might not be necessary/can be implemented later as a TODO
 
-        // ADD 16 Bit
+            // Only used for CGB
+            if (!CGBMode) {
+                return;
+            }
+            uint8_t key1 = mmu->read8(0xFF4D);
+
+            // If armed switch to other mode
+            if ((key1 & 0x01) == 0x01) {
+                doubleSpeed = !doubleSpeed;
+
+                // Clear bit0 and set speed
+                ((key1 & 0x80) == 0x80) ? mmu->write8(0xFF4D, 0x00) : mmu->write8(0xFF4D, 0x80);   
+            }
+
+            pc++;
+            break;
+
+        /**
+         * Load Instructions
+         */
+        case 0x40: // LD B, B
+            registers[REG_B] = registers[REG_B];
+            break;
+
+        case 0x41: // LD B, C
+            registers[REG_B] = registers[REG_C];
+            break;
+
+        case 0x42: // LD B, D
+            registers[REG_B] = registers[REG_D];
+            break;
+
+        case 0x43: // LD B, E
+            registers[REG_B] = registers[REG_E];
+            break;
+        
+        case 0x44: // LD B, H
+            registers[REG_B] = registers[REG_H];
+            break;
+
+        case 0x45: // LD B, L
+            registers[REG_B] = registers[REG_L];
+            break;
+
+        case 0x46: // LD B, (HL)
+            registers[REG_B] = mmu->read8(getHL());
+            break;
+
+        case 0x47: // LD B, A
+            registers[REG_B] = registers[REG_A];
+            break;
+        
+        case 0x48: // LD C, B
+            registers[REG_C] = registers[REG_B];
+            break;
+
+        case 0x49: // LD C, C
+            registers[REG_C] = registers[REG_C];
+            break;
+
+        case 0x4A: // LD C, D
+            registers[REG_C] = registers[REG_D];
+            break;
+
+        case 0x4B: // LD C, E
+            registers[REG_C] = registers[REG_E];
+            break;
+
+        case 0x4C: // LD C, H
+            registers[REG_C] = registers[REG_H];
+            break;
+
+        case 0x4D: // LD C, L
+            registers[REG_C] = registers[REG_L];
+            break;
+
+        case 0x4E: // LD C, (HL)
+            registers[REG_C] = mmu->read8(getHL());
+            break;
+
+        case 0x4F: // LD C, A
+            registers[REG_C] = registers[REG_A];
+            break;
+
+        case 0x50: // LD D, B
+            registers[REG_D] == registers[REG_B];
+            break;
+
+        case 0x51: // LD D, C
+            registers[REG_D] = registers[REG_C];
+            break;
+
+        case 0x52: // LD D, D
+            registers[REG_D] = registers[REG_D];
+            break;
+
+        case 0x53: // LD D, E
+            registers[REG_D] = registers[REG_E];
+            break;
+
+        case 0x54: // LD D, H
+            registers[REG_D] = registers[REG_H];
+            break;
+
+        case 0x55: // LD D, L
+            registers[REG_D] = registers[REG_L];
+            break;
 
 
-        // ADC
+        case 0x56: // LD D, (HL)
+            registers[REG_D] = mmu->read8(getHL());
+            break;
+
+        case 0x57: // LD D, A
+            registers[REG_D] = registers[REG_A];
+            break;
+
+        case 0x58: // LD E, B
+            registers[REG_E] = registers[REG_B];
+            break;
+
+        case 0x59: // LD E, C
+            registers[REG_E] = registers[REG_C];
+            break;
+
+        case 0x5A: // LD E, D
+            registers[REG_E] = registers[REG_D];
+            break;
+
+        case 0x5B: // LD E, E
+            registers[REG_E] = registers[REG_E];
+            break;
+
+        case 0x5C: // LD E, H
+            registers[REG_E] = registers[REG_H];
+            break;
+
+        case 0x5D: // LD E, L
+            registers[REG_E] = registers[REG_L];
+            break;
+
+        case 0x5E: // LD E, (HL)
+            registers[REG_E] = mmu->read8(getHL());
+            break;
+
+        case 0x5F: // LD E, A
+            registers[REG_E] = registers[REG_A];
+            break;
+
+        case 0x60: // LD H, B
+            registers[REG_H] = registers[REG_B];
+            break;
+
+        case 0x61: // LD H, C
+            registers[REG_H] = registers[REG_C];
+            break;
+
+        case 0x62: // LD H, D
+            registers[REG_H] = registers[REG_D];
+            break;
+
+        case 0x63: // LD H, E
+            registers[REG_H] = registers[REG_E];
+            break;
+
+        case 0x64: // LD H, H
+            registers[REG_H] = registers[REG_H];
+            break;
+
+        case 0x65: // LD H, L
+            registers[REG_H] = registers[REG_L];
+            break;
+
+        case 0x66: // LD H, (HL)
+            registers[REG_H] = mmu->read8(getHL());
+            break;
+
+        case 0x67: // LD H, A
+            registers[REG_H] = registers[REG_A];
+            break;
+
+        case 0x68: // LD L, B
+            registers[REG_L] = registers[REG_B];
+            break;
 
 
-        // SUB
+        case 0x69: // LD L, C
+            registers[REG_L] = registers[REG_C];
+            break;
 
-        // SBC
+        case 0x6A: // LD L, D
+            registers[REG_L] = registers[REG_D];
+            break;
 
-        // XOR
-
-        // OR
-
-        // CP
-
-        // LD (nn), n
+        case 0x6B: // LD L, E
+            registers[REG_L] = registers[REG_E];
+            break;
 
 
-        // LD n, u8
+        case 0x6C: // LD L, H
+            registers[REG_L] = registers[REG_E];
+            break;
 
-        // LD n, (nn)
+        case 0x6D: // LD L, L
+            registers[REG_L] = registers[REG_L];
+            break;
 
-        // LD n, n
+        case 0x6E: // LD L, (HL)
+            registers[REG_L] = mmu->read8(getHL());
+            break;
+
+        case 0x6F: // LD L, A
+            registers[REG_L] = registers[REG_A];
+            break;
+
+
+        
+
+
+
+
+        // 8-bit Arithmetic Instructions
+
+
+
+
+        // 16-bit Arithmetic Instructions
+
+
+
+        // Bitwise Logic Instructions
+
+
+
+        // Bit Flag Instructions
+
+
+
+        // Bit Shift Instructions
+
+
+        // Jumps and Subroutine Instructions
+
+
+        // Carry Flag Instructions
+
+        // Stack Manipulation Instructions
+
+        // IE Instructions
+
+
 
 
         default:
@@ -84,94 +344,96 @@ void CPU::setState(int mode)
 
 void CPU::resetGB()
 {
-    registers[0] = 0x01;
-    registers[1] = 0xB0;
-    registers[2] = 0x00;
-    registers[3] = 0x13;
-    registers[4] = 0x00;
-    registers[5] = 0xD8;
-    registers[6] = 0x01;
-    registers[7] = 0x4D;
+    registers[REG_A] = 0x01;
+    registers[REG_F] = 0xB0;
+    registers[REG_B] = 0x00;
+    registers[REG_C] = 0x13;
+    registers[REG_D] = 0x00;
+    registers[REG_E] = 0xD8;
+    registers[REG_H] = 0x01;
+    registers[REG_L] = 0x4D;
     pc = 0x100;
     sp = 0xFFFE;
+    doubleSpeed = false;
 }
 
 void CPU::resetCGB()
 {
-    registers[0] = 0x11;
-    registers[1] = 0x80;
-    registers[2] = 0x00;
-    registers[3] = 0x00;
-    registers[4] = 0xFF;
-    registers[5] = 0x56;
-    registers[6] = 0x00;
-    registers[7] = 0x0D;
+    registers[REG_A] = 0x11;
+    registers[REG_F] = 0x80;
+    registers[REG_B] = 0x00;
+    registers[REG_C] = 0x00;
+    registers[REG_D] = 0xFF;
+    registers[REG_E] = 0x56;
+    registers[REG_H] = 0x00;
+    registers[REG_L] = 0x0D;
     pc = 0x100;
     sp = 0xFFFE;
+    doubleSpeed = false;
 }
 
 void CPU::setZ(bool set) {
     if (set) {
-        registers[1] |= 0x80;
+        registers[REG_F] |= 0x80;
     } else {
-        registers[1] &= 0x7F;
+        registers[REG_F] &= 0x7F;
     }
 }
 
 void CPU::setN(bool set) {
     if (set) {
-        registers[1] |= 0x40;
+        registers[REG_F] |= 0x40;
     } else {
-        registers[1] &= 0xBF;
+        registers[REG_F] &= 0xBF;
     }
 }
 
 void CPU::setH(bool set) {
     if (set) {
-        registers[1] |= 0x20;
+        registers[REG_F] |= 0x20;
     } else {
-        registers[1] &= 0xDF;
+        registers[REG_F] &= 0xDF;
     }
 }
 
 void CPU::setC(bool set) {
     if (set) {
-        registers[1] |= 0x10;
+        registers[REG_F] |= 0x10;
     } else {
-        registers[1] &= 0xEF;
+        registers[REG_F] &= 0xEF;
     }
 }
 
 bool CPU::getZ() {
-    return (registers[1] & 0x80) != 0;
+    return (registers[REG_F] & 0x80) != 0;
 }
 
 bool CPU::getN()
 {
-    return (registers[1] & 0x40) != 0;
+    return (registers[REG_F] & 0x40) != 0;
 }
 
 bool CPU::getH()
 {
-    return (registers[1] & 0x20) != 0;
+    return (registers[REG_F] & 0x20) != 0;
 }
 
 bool CPU::getC()
 {
-    return (registers[1] & 0x10) != 0;
+    return (registers[REG_F] & 0x10) != 0;
 }
 
 
 uint16_t CPU::getBC() {
-    return registers[2] << 8 | registers[3];
+    return registers[REG_B] << 8 | registers[REG_C];
 }
 
 uint16_t CPU::getDE() {
-    return registers[4] << 8 | registers[5];
+    return registers[REG_D] << 8 | registers[REG_E];
 }
 
 uint16_t CPU::getHL() {
-    return registers[6] << 8 | registers[7];
+    return registers[REG_H] << 8 | registers[REG_L];
 }
 
 
@@ -235,12 +497,12 @@ uint8_t CPU::DEC8(uint8_t val) {
 
 void CPU::ADD8(uint8_t val) {
     setN(false);
-    setH((registers[0] & 0xF) + (val & 0xF) > 0xF);
-    setC((registers[0] + val) > 0xFF);
+    setH((registers[REG_A] & 0xF) + (val & 0xF) > 0xF);
+    setC((registers[REG_A] + val) > 0xFF);
     
-    registers[0] += val;
+    registers[REG_A] += val;
 
-    setZ(registers[0] == 0);
+    setZ(registers[REG_A] == 0);
 }
 
 void CPU::ADD16(uint16_t val) {
@@ -250,32 +512,32 @@ void CPU::ADD16(uint16_t val) {
     setH((getHL() & 0x0FFF) + (val & 0x0FFF) > 0x0FFF);
 
     // Set H and L registers
-    registers[6] = (res >> 8) & 0xFF; 
-    registers[7] = res & 0xFF;
+    registers[REG_H] = (res >> 8) & 0xFF; 
+    registers[REG_L] = res & 0xFF;
 
 }
 
 void CPU::ADC(uint8_t val) {
     setN(false);
     uint8_t carry = getC();
-    setH((registers[0] & 0xF) + (val & 0xF) + carry > 0xF);
-    setC((registers[0] + val + carry) > 0xFF);
+    setH((registers[REG_A] & 0xF) + (val & 0xF) + carry > 0xF);
+    setC((registers[REG_A] + val + carry) > 0xFF);
 
-    registers[0] += carry;
+    registers[REG_A] += carry;
 
-    setZ(registers[0] == 0);
+    setZ(registers[REG_A] == 0);
 }
 
 void CPU::SUB(uint8_t val) {
     setN(true);
 
-    setH((registers[0] & 0xF) < (val & 0xF));
-    setC(registers[0] < val);
+    setH((registers[REG_A] & 0xF) < (val & 0xF));
+    setC(registers[REG_A] < val);
 
-    registers[0] -= val;
+    registers[REG_A] -= val;
 
 
-    setZ(registers[0] == 0);
+    setZ(registers[REG_A] == 0);
 }
 
 void CPU::SBC(uint8_t val) {
@@ -283,12 +545,12 @@ void CPU::SBC(uint8_t val) {
 
     uint8_t carry = getC();
 
-    setH((registers[0] & 0xF) < ((val & 0xF) + carry));
-    setC(registers[0] < (val + carry));
+    setH((registers[REG_A] & 0xF) < ((val & 0xF) + carry));
+    setC(registers[REG_A] < (val + carry));
 
-    registers[0] -= carry;
+    registers[REG_A] -= carry;
 
-    setZ(registers[0] == 0);
+    setZ(registers[REG_A] == 0);
 }
 
 
@@ -297,10 +559,10 @@ void CPU::XOR(uint8_t val) {
     setC(false);
     setH(false);
 
-    uint8_t res = registers[0] ^ val;
+    uint8_t res = registers[REG_A] ^ val;
 
     setZ(res == 0);
-    registers[0] = res;
+    registers[REG_A] = res;
 }
 
 void CPU::OR(uint8_t val) {
@@ -308,18 +570,18 @@ void CPU::OR(uint8_t val) {
     setC(false);
     setH(false);
 
-    uint8_t res = registers[0] | val;
+    uint8_t res = registers[REG_A] | val;
 
     setZ(res == 0);
 
-    registers[0] = res;
+    registers[REG_A] = res;
 }
 
 void CPU::CP(uint8_t val) {
     setN(true);
-    setC(registers[0] < val);
-    setH((registers[0] & 0xF) < (val & 0xF));
-    setZ(registers[0] == val);
+    setC(registers[REG_A] < val);
+    setH((registers[REG_A] & 0xF) < (val & 0xF));
+    setZ(registers[REG_A] == val);
 }
 
 // void CPU::setHAdd(uint8_t left, uint8_t right) {
