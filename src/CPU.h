@@ -35,6 +35,8 @@ class CPU {
         // Interupts
         bool ime;
 
+        bool halt = false;
+
         int CGBMode;
         bool doubleSpeed;
 
@@ -73,8 +75,10 @@ class CPU {
         void ADC(uint8_t val);
         void SUB(uint8_t val);
         void SBC(uint8_t val);
+        
 
         // Inequality Operations
+        void AND(uint8_t val);
         void XOR(uint8_t val);
         void OR(uint8_t val);
         void CP(uint8_t val);
