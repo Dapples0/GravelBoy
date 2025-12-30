@@ -11,7 +11,7 @@ class CPU {
         void connect(MMU *mmu);
         void setState(int mode);
         void execute();
-        void executeInstruction(uint8_t opcode);
+        
     private:
         MMU *mmu;
         
@@ -42,7 +42,9 @@ class CPU {
 
         void resetGB();
         void resetCGB();
-
+        void executeInstruction(uint8_t opcode);
+        void executeCBInstruction(uint8_t opcode);
+    
         // Set Flag Registers
         void setZ(bool set);
         void setN(bool set);
@@ -99,7 +101,8 @@ class CPU {
         uint8_t RR(uint8_t val);
         uint8_t SRA(uint8_t val);
         uint8_t SLA(uint8_t val);
-        uint8_t SRL(uint8_t val);        
+        uint8_t SRL(uint8_t val);
+        uint8_t SWAP(uint8_t val);
         uint8_t SET(uint8_t pos, uint8_t reg);
         void BIT(uint8_t pos, uint8_t reg);
 

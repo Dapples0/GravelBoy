@@ -27,9 +27,9 @@ void CPU::execute() {
 void CPU::executeInstruction(uint8_t opcode) {
     pc++;
 
-    // Instructions Done: 244/501
     switch (opcode) {
         case 0xCB: // 0xCB Prefixed
+            executeCBInstruction(mmu->read8(pc));
             break;
 
         /**
@@ -42,13 +42,10 @@ void CPU::executeInstruction(uint8_t opcode) {
         {
             uint8_t adjustment = 0x00;
             if (getN()) {
-                if (getH()) {
-                    adjustment += 0x06;
-                }
+                if (getH()) adjustment += 0x06;
 
-                if (getC()) {
-                    adjustment += 0x60;
-                }
+                if (getC()) adjustment += 0x60;
+                
 
                 registers[REG_A] -= adjustment;
 
@@ -1189,10 +1186,985 @@ void CPU::executeInstruction(uint8_t opcode) {
 
 
         default:
-            std::cerr << "Bad instruction | Opcode: " << opcode << " PC: " << pc << "\n";
+            std::cerr << "Bad instruction | Opcode: " << opcode << " PC: " << pc - 1 << "\n";
             break;
     }
 }
+
+void CPU::executeCBInstruction(uint8_t opcode) {
+    pc++;
+    switch (opcode) {
+        /**
+         * RLC Instructions 
+         */
+        case 0x00: // RLC B
+            registers[REG_B] = RLC(registers[REG_B]);
+            break;        
+        case 0x01: // RLC C
+            registers[REG_C] = RLC(registers[REG_C]);
+            break;
+        case 0x02: // RLC D
+            registers[REG_D] = RLC(registers[REG_D]);
+            break;
+        case 0x03: // RLC E
+            registers[REG_E] = RLC(registers[REG_E]);
+            break;
+        case 0x04: // RLC H
+            registers[REG_H] = RLC(registers[REG_H]);
+            break;
+        case 0x05: // RLC L
+            registers[REG_L] = RLC(registers[REG_L]);
+            break;
+        case 0x06: // RLC (HL)
+            setHL(RLC(mmu->read8(getHL())));
+            break;
+        case 0x07: // RLC A
+            registers[REG_A] = RLC(registers[REG_A]);
+            break;
+        case 0x08: // RRC B
+            registers[REG_B] = RRC(registers[REG_B]);
+            break;
+        case 0x09: // RRC C
+            registers[REG_C] = RRC(registers[REG_C]);
+            break;
+        case 0x0A: // RRC D
+            registers[REG_D] = RRC(registers[REG_D]);
+            break;
+        case 0x0B: // RRC E
+            registers[REG_E] = RRC(registers[REG_E]);
+            break;
+        case 0x0C: // RRC H
+            registers[REG_H] = RRC(registers[REG_H]);
+            break;
+        case 0x0D: // RRC L
+            registers[REG_L] = RRC(registers[REG_L]);
+            break;
+        case 0x0E: // RRC (HL)
+            setHL(RRC(mmu->read8(getHL())));
+            break;
+        case 0x0F: // RRC A
+            registers[REG_A] = RRC(registers[REG_A]);
+            break;
+        case 0x10: // RL B
+            registers[REG_B] = RL(registers[REG_B]);
+            break;
+        case 0x11: // RL C
+            registers[REG_C] = RL(registers[REG_C]);
+            break;
+        case 0x12: // RL D
+            registers[REG_D] = RL(registers[REG_D]);
+            break;
+        case 0x13: // RL E
+            registers[REG_E] = RL(registers[REG_E]);
+            break;
+        case 0x14: // RL H
+            registers[REG_H] = RL(registers[REG_H]);
+            break;
+        case 0x15: // RL L
+            registers[REG_L] = RL(registers[REG_L]);
+            break;
+        case 0x16: // RL (HL)
+            setHL(RL(mmu->read8(getHL())));
+            break;
+        case 0x17: // RL A
+            registers[REG_A] = RL(registers[REG_A]);
+            break;
+        case 0x18: // RR B
+            registers[REG_B] = RR(registers[REG_B]);
+            break;
+        case 0x19: // RR C
+            registers[REG_C] = RR(registers[REG_C]);
+            break;
+        case 0x1A: // RR D
+            registers[REG_D] = RR(registers[REG_D]);
+            break;
+        case 0x1B: // RR E
+            registers[REG_E] = RR(registers[REG_E]);
+            break;
+        case 0x1C: // RR H
+            registers[REG_H] = RR(registers[REG_H]);
+            break;
+        case 0x1D: // RR L
+            registers[REG_L] = RR(registers[REG_L]);
+            break;
+        case 0x1E: // RR (HL)
+            setHL(RR(mmu->read8(getHL())));
+            break;
+        case 0x1F: // RR A
+            registers[REG_A] = RR(registers[REG_A]);
+            break;
+        case 0x20: // SLA B
+            registers[REG_B] = SLA(registers[REG_B]);
+            break;
+        case 0x21: // SLA C
+            registers[REG_C] = SLA(registers[REG_C]);
+            break;
+        case 0x22: // SLA D
+            registers[REG_D] = SLA(registers[REG_D]);
+            break;
+        case 0x23: // SLA E
+            registers[REG_E] = SLA(registers[REG_E]);
+            break;
+        case 0x24: // SLA H
+            registers[REG_H] = SLA(registers[REG_H]);
+            break;
+        case 0x25: // SLA L
+            registers[REG_L] = SLA(registers[REG_L]);
+            break;
+        case 0x26: // SLA (HL)
+            setHL(SLA(mmu->read8(getHL())));
+            break;
+        case 0x27: // SLA A
+            registers[REG_A] = SLA(registers[REG_A]);
+            break;
+        case 0x28: // SRA B
+            registers[REG_B] = SRA(registers[REG_B]);
+            break;
+        case 0x29: // SRA C
+            registers[REG_C] = SRA(registers[REG_C]);
+            break;
+        case 0x2A: // SRA D
+            registers[REG_D] = SRA(registers[REG_D]);
+            break;
+        case 0x2B: // SRA E
+            registers[REG_E] = SRA(registers[REG_E]);
+            break;
+        case 0x2C: // SRA H
+            registers[REG_H] = SRA(registers[REG_H]);
+            break;
+        case 0x2D: // SRA L
+            registers[REG_L] = SRA(registers[REG_L]);
+            break;
+        case 0x2E: // SRA (HL)
+            setHL(SRA(mmu->read8(getHL())));
+            break;
+        case 0x2F: // SRA A
+            registers[REG_A] = SRA(registers[REG_A]);
+            break;
+        case 0x30: // SWAP B
+            registers[REG_B] = SWAP(registers[REG_B]);
+            break;
+        case 0x31: // SWAP C
+            registers[REG_C] = SWAP(registers[REG_C]);
+            break;
+        case 0x32: // SWAP D
+            registers[REG_D] = SWAP(registers[REG_D]);
+            break;
+        case 0x33: // SWAP E
+            registers[REG_E] = SWAP(registers[REG_E]);
+            break;
+        case 0x34: // SWAP H
+            registers[REG_H] = SWAP(registers[REG_H]);
+            break;
+        case 0x35: // SWAP L
+            registers[REG_L] = SWAP(registers[REG_L]);
+            break;
+        case 0x36: // SWAP (HL)
+            setHL(SWAP(mmu->read8(getHL())));
+            break;
+        case 0x37: // SWAP A
+            registers[REG_A] = SWAP(registers[REG_A]);
+            break;
+        case 0x38: // SRL B
+            registers[REG_B] = SRL(registers[REG_B]);
+            break;
+        case 0x39: // SRL C
+            registers[REG_C] = SRL(registers[REG_C]);
+            break;
+        case 0x3A: // SRL D
+            registers[REG_D] = SRL(registers[REG_D]);
+            break;
+        case 0x3B: // SRL E
+            registers[REG_E] = SRL(registers[REG_E]);
+            break;
+        case 0x3C: // SRL H
+            registers[REG_H] = SRL(registers[REG_H]);
+            break;
+        case 0x3D: // SRL L
+            registers[REG_L] = SRL(registers[REG_L]);
+            break;
+        case 0x3E: // SRL (HL)
+            setHL(SRL(mmu->read8(getHL())));
+            break;
+        case 0x3F: // SRL A
+            registers[REG_A] = SRL(registers[REG_A]);
+            break;
+
+        case 0x40: // BIT 0, B
+            BIT(0, registers[REG_B]);
+            break;
+        
+        case 0x41: // BIT 0, C
+            BIT(0, registers[REG_C]);
+            break;
+        
+        case 0x42: // BIT 0, D
+            BIT(0, registers[REG_D]);
+            break;
+        
+        case 0x43: // BIT 0, E
+            BIT(0, registers[REG_E]);
+            break;
+        
+        case 0x44: // BIT 0, H
+            BIT(0, registers[REG_H]);
+            break;
+        
+        case 0x45: // BIT 0, L
+            BIT(0, registers[REG_L]);
+            break;
+        
+        case 0x46: // BIT 0, (HL)
+            BIT(0, mmu->read8(getHL()));
+            break;
+        
+        case 0x47: // BIT 0, A
+            BIT(0, registers[REG_A]);
+            break;
+        
+        case 0x48: // BIT 1, B
+            BIT(1, registers[REG_B]);
+            break;
+        
+        case 0x49: // BIT 1, C
+            BIT(1, registers[REG_C]);
+            break;
+        
+        case 0x4A: // BIT 1, D
+            BIT(1, registers[REG_D]);
+            break;
+        
+        case 0x4B: // BIT 1, E
+            BIT(1, registers[REG_E]);
+            break;
+        
+        case 0x4C: // BIT 1, H
+            BIT(1, registers[REG_H]);
+            break;
+        
+        case 0x4D: // BIT 1, L
+            BIT(1, registers[REG_L]);
+            break;
+        
+        case 0x4E: // BIT 1, (HL)
+            BIT(1, mmu->read8(getHL()));
+            break;
+        
+        case 0x4F: // BIT 1, A
+            BIT(1, registers[REG_A]);
+            break;
+        
+        case 0x50: // BIT 2, B
+            BIT(2, registers[REG_D]);
+            break;
+        
+        case 0x51: // BIT 2, C
+            BIT(2, registers[REG_C]);
+            break;
+        
+        case 0x52: // BIT 2, D
+            BIT(2, registers[REG_D]);
+            break;
+        
+        case 0x53: // BIT 2, E
+            BIT(2, registers[REG_E]);
+            break;
+        
+        case 0x54: // BIT 2, H
+            BIT(2, registers[REG_H]);
+            break;
+        
+        case 0x55: // BIT 2, L
+            BIT(2, registers[REG_L]);
+            break;
+        
+        case 0x56: // BIT 2, (HL)
+            BIT(2, mmu->read8(getHL()));
+            break;
+        
+        case 0x57: // BIT 2, A
+            BIT(2, registers[REG_A]);
+            break;
+        
+        case 0x58: // BIT 3, B
+            BIT(3, registers[REG_H]);
+            break;
+        
+        case 0x59: // BIT 3, C
+            BIT(3, registers[REG_C]);
+            break;
+        
+        case 0x5A: // BIT 3, D
+            BIT(3, registers[REG_D]);
+            break;
+        
+        case 0x5B: // BIT 3, E
+            BIT(3, registers[REG_E]);
+            break;
+        
+        case 0x5C: // BIT 3, H
+            BIT(3, registers[REG_H]);
+            break;
+        
+        case 0x5D: // BIT 3, L
+            BIT(3, registers[REG_L]);
+            break;
+        
+        case 0x5E: // BIT 3, (HL)
+            BIT(3, mmu->read8(getHL()));
+            break;
+        
+        case 0x5F: // BIT 3, A
+            BIT(3, registers[REG_A]);
+            break;
+        
+        case 0x60: // BIT 4, B
+            BIT(4, registers[REG_B]);
+            break;
+        
+        case 0x61: // BIT 4, C
+            BIT(4, registers[REG_C]);
+            break;
+        
+        case 0x62: // BIT 4, D
+            BIT(4, registers[REG_D]);
+            break;
+        
+        case 0x63: // BIT 4, E
+            BIT(4, registers[REG_E]);
+            break;
+        
+        case 0x64: // BIT 4, H
+            BIT(4, registers[REG_H]);
+            break;
+        
+        case 0x65: // BIT 4, L
+            BIT(4, registers[REG_L]);
+            break;
+        
+        case 0x66: // BIT 4, (HL)
+            BIT(4, mmu->read8(getHL()));
+            break;
+        
+        case 0x67: // BIT 4, A
+            BIT(4, registers[REG_A]);
+            break;
+        
+        case 0x68: // BIT 5, B
+            BIT(5, registers[REG_B]);
+            break;
+        
+        case 0x69: // BIT 5, C
+            BIT(5, registers[REG_C]);
+            break;
+        
+        case 0x6A: // BIT 5, D
+            BIT(5, registers[REG_D]);
+            break;
+        
+        case 0x6B: // BIT 5, E
+            BIT(5, registers[REG_E]);
+            break;
+        
+        case 0x6C: // BIT 5, H
+            BIT(5, registers[REG_H]);
+            break;
+        
+        case 0x6D: // BIT 5, L
+            BIT(5, registers[REG_L]);
+            break;
+        
+        case 0x6E: // BIT 5, (HL)
+            BIT(5, mmu->read8(getHL()));
+            break;
+        
+        case 0x6F: // BIT 5, A
+            BIT(5, registers[REG_A]);
+            break;
+        
+        case 0x70: // BIT 6, B
+            BIT(6, registers[REG_B]);
+            break;
+        
+        case 0x71: // BIT 6, C
+            BIT(6, registers[REG_C]);
+            break;
+        
+        case 0x72: // BIT 6, D
+            BIT(6, registers[REG_D]);
+            break;
+        
+        case 0x73: // BIT 6, E
+            BIT(6, registers[REG_E]);
+            break;
+        
+        case 0x74: // BIT 6, H
+            BIT(6, registers[REG_H]);
+            break;
+        
+        case 0x75: // BIT 6, L
+            BIT(6, registers[REG_L]);
+            break;
+        
+        case 0x76: // BIT 6, (HL)
+            BIT(6, mmu->read8(getHL()));
+            break;
+    
+        case 0x77: // BIT 6, A
+            BIT(6, registers[REG_A]);
+            break;
+    
+        case 0x78: // BIT 7, B
+            BIT(7, registers[REG_B]);
+            break;
+        
+        case 0x79: // BIT 7, C
+            BIT(7, registers[REG_C]);
+            break;
+        
+        case 0x7A: // BIT 7, D
+            BIT(7, registers[REG_D]);
+            break;
+        
+        case 0x7B: // BIT 7, E
+            BIT(7, registers[REG_E]);
+            break;
+        
+        case 0x7C: // BIT 7, H
+            BIT(7, registers[REG_H]);
+            break;
+        
+        case 0x7D: // BIT 7, L
+            BIT(7, registers[REG_L]);
+            break;
+        
+        case 0x7E: // BIT 7, (HL)
+            BIT(7, mmu->read8(getHL()));
+            break;
+        
+        case 0x7F: // BIT 7, A
+            BIT(7, registers[REG_A]);
+            break;
+        
+        case 0x80: // RES 0, B
+            RES(0, registers[REG_B]);
+            break;
+
+        case 0x81: // RES 0, C
+            registers[REG_C] = RES(0, registers[REG_C]);
+            break;
+
+        case 0x82: // RES 0, D
+            registers[REG_D] = RES(0, registers[REG_D]);
+            break;
+
+        case 0x83: // RES 0, E
+            registers[REG_E] = RES(0, registers[REG_E]);
+            break;
+
+        case 0x84: // RES 0, H
+            registers[REG_H] = RES(0, registers[REG_H]);
+            break;
+
+        case 0x85: // RES 0, L
+            registers[REG_L] = RES(0, registers[REG_L]);
+            break;
+
+        case 0x86: // RES 0, (HL)
+            setHL(RES(0, mmu->read8(getHL())));
+            break;
+
+        case 0x87: // RES 0, A
+            registers[REG_A] = RES(0, registers[REG_A]);
+            break;
+
+        case 0x88: // RES 1, B
+            registers[REG_B] = RES(1, registers[REG_B]);
+            break;
+
+        case 0x89: // RES 1, C
+            registers[REG_C] = RES(1, registers[REG_C]);
+            break;
+
+        case 0x8A: // RES 1, D
+            registers[REG_D] = RES(1, registers[REG_D]);
+            break;
+
+        case 0x8B: // RES 1, E
+            registers[REG_E] = RES(1, registers[REG_E]);
+            break;
+
+        case 0x8C: // RES 1, H
+            registers[REG_H] = RES(1, registers[REG_H]);
+            break;
+
+        case 0x8D: // RES 1, L
+            registers[REG_L] = RES(1, registers[REG_L]);
+            break;
+
+        case 0x8E: // RES 1, (HL)
+            setHL(RES(1, mmu->read8(getHL())));
+            break;
+
+        case 0x8F: // RES 1, A
+            registers[REG_A] = RES(1, registers[REG_A]);
+            break;
+
+        case 0x90: // RES 2, B
+            registers[REG_B] = RES(2, registers[REG_B]);
+            break;
+
+        case 0x91: // RES 2, C
+            registers[REG_C] = RES(2, registers[REG_C]);
+            break;
+
+        case 0x92: // RES 2, D
+            registers[REG_D] = RES(2, registers[REG_D]);
+            break;
+
+        case 0x93: // RES 2, E
+            registers[REG_E] = RES(2, registers[REG_E]);
+            break;
+
+        case 0x94: // RES 2, H
+            registers[REG_H] = RES(2, registers[REG_H]);
+            break;
+
+        case 0x95: // RES 2, L
+            registers[REG_L] = RES(2, registers[REG_L]);
+            break;
+
+        case 0x96: // RES 2, (HL)
+            setHL(RES(2, mmu->read8(getHL())));
+            break;
+
+        case 0x97: // RES 2, A
+            registers[REG_A] = RES(2, registers[REG_A]);
+            break;
+
+        case 0x98: // RES 3, B
+            registers[REG_B] = RES(3, registers[REG_B]);
+            break;
+
+        case 0x99: // RES 3, C
+            registers[REG_C] = RES(3, registers[REG_C]);
+            break;
+
+        case 0x9A: // RES 3, D
+            registers[REG_D] = RES(3, registers[REG_D]);
+            break;
+
+        case 0x9B: // RES 3, E
+            registers[REG_E] = RES(3, registers[REG_E]);
+            break;
+
+        case 0x9C: // RES 3, H
+            registers[REG_H] = RES(3, registers[REG_H]);
+            break;
+
+        case 0x9D: // RES 3, L
+            registers[REG_L] = RES(3, registers[REG_L]);
+            break;
+
+        case 0x9E: // RES 3, (HL)
+            setHL(RES(3, mmu->read8(getHL())));
+            break;
+
+        case 0x9F: // RES 3, A
+            registers[REG_A] = RES(3, registers[REG_A]);
+            break;
+
+        case 0xA0: // RES 4, B
+            registers[REG_B] = RES(4, registers[REG_B]);
+            break;
+
+        case 0xA1: // RES 4, C
+            registers[REG_C] = RES(4, registers[REG_C]);
+            break;
+
+        case 0xA2: // RES 4, D
+            registers[REG_D] = RES(4, registers[REG_D]);
+            break;
+
+        case 0xA3: // RES 4, E
+            registers[REG_E] = RES(4, registers[REG_E]);
+            break;
+
+        case 0xA4: // RES 4, H
+            registers[REG_H] = RES(4, registers[REG_H]);
+            break;
+
+        case 0xA5: // RES 4, L
+            registers[REG_L] = RES(4, registers[REG_L]);
+            break;
+
+        case 0xA6: // RES 4, (HL)
+            setHL(RES(4, mmu->read8(getHL())));
+            break;
+
+        case 0xA7: // RES 4, A
+            registers[REG_A] = RES(4, registers[REG_A]);
+            break;
+
+        case 0xA8: // RES 5, B
+            registers[REG_B] = RES(5, registers[REG_B]);
+            break;
+
+        case 0xA9: // RES 5, C
+            registers[REG_C] = RES(5, registers[REG_C]);
+            break;
+
+        case 0xAA: // RES 5, D
+            registers[REG_D] = RES(5, registers[REG_D]);
+            break;
+
+        case 0xAB: // RES 5, E
+            registers[REG_E] = RES(5, registers[REG_E]);
+            break;
+
+        case 0xAC: // RES 5, H
+            registers[REG_H] = RES(5, registers[REG_H]);
+            break;
+
+        case 0xAD: // RES 5, L
+            registers[REG_L] = RES(5, registers[REG_L]);
+            break;
+
+        case 0xAE: // RES 5, (HL)
+            setHL(RES(5, mmu->read8(getHL())));
+            break;
+
+        case 0xAF: // RES 5, A
+            registers[REG_A] = RES(5, registers[REG_A]);
+            break;
+
+        case 0xB0: // RES 6, B
+            registers[REG_B] = RES(6, registers[REG_B]);
+            break;
+
+        case 0xB1: // RES 6, C
+            registers[REG_C] = RES(6, registers[REG_C]);
+            break;
+
+        case 0xB2: // RES 6, D
+            registers[REG_D] = RES(6, registers[REG_D]);
+            break;
+
+        case 0xB3: // RES 6, E
+            registers[REG_E] = RES(6, registers[REG_E]);
+            break;
+
+        case 0xB4: // RES 6, H
+            registers[REG_H] = RES(6, registers[REG_H]);
+            break;
+
+        case 0xB5: // RES 6, L
+            registers[REG_L] = RES(6, registers[REG_L]);
+            break;
+
+        case 0xB6: // RES 6, (HL)
+            setHL(RES(6, mmu->read8(getHL())));
+            break;
+
+        case 0xB7: // RES 6, A
+            registers[REG_A] = RES(6, registers[REG_A]);
+            break;
+
+        case 0xB8: // RES 7, B
+            registers[REG_B] = RES(7, registers[REG_B]);
+            break;
+
+        case 0xB9: // RES 7, C
+            registers[REG_C] = RES(7, registers[REG_C]);
+            break;
+
+        case 0xBA: // RES 7, D
+            registers[REG_D] = RES(7, registers[REG_D]);
+            break;
+
+        case 0xBB: // RES 7, E
+            registers[REG_E] = RES(7, registers[REG_E]);
+            break;
+
+        case 0xBC: // RES 7, H
+            registers[REG_H] = RES(7, registers[REG_H]);
+            break;
+
+        case 0xBD: // RES 7, L
+            registers[REG_L] = RES(7, registers[REG_L]);
+            break;
+
+        case 0xBE: // RES 7, (HL)
+            setHL(RES(7, mmu->read8(getHL())));
+            break;
+
+        case 0xBF: // RES 7, A
+            registers[REG_A] = RES(7, registers[REG_A]);
+            break;
+
+        case 0xC0: // SET 0, B
+            registers[REG_B] = SET(0, registers[REG_B]);
+            break;
+
+        case 0xC1: // SET 0, C
+            registers[REG_C] = SET(0, registers[REG_C]);
+            break;
+
+        case 0xC2: // SET 0, D
+            registers[REG_D] = SET(0, registers[REG_D]);
+            break;
+
+        case 0xC3: // SET 0, E
+            registers[REG_E] = SET(0, registers[REG_E]);
+            break;
+
+        case 0xC4: // SET 0, H
+            registers[REG_H] = SET(0, registers[REG_H]);
+            break;
+
+        case 0xC5: // SET 0, L
+            registers[REG_L] = SET(0, registers[REG_L]);
+            break;
+
+        case 0xC6: // SET 0, (HL)
+            setHL(SET(0, mmu->read8(getHL())));
+            break;
+
+        case 0xC7: // SET 0, A
+            registers[REG_A] = SET(0, registers[REG_A]);
+            break;
+
+        case 0xC8: // SET 1, B
+            registers[REG_B] = SET(1, registers[REG_B]);
+            break;
+
+        case 0xC9: // SET 1, C
+            registers[REG_C] = SET(1, registers[REG_C]);
+            break;
+
+        case 0xCA: // SET 1, D
+            registers[REG_D] = SET(1, registers[REG_D]);
+            break;
+
+        case 0xCB: // SET 1, E
+            registers[REG_E] = SET(1, registers[REG_E]);
+            break;
+
+        case 0xCC: // SET 1, H
+            registers[REG_H] = SET(1, registers[REG_H]);
+            break;
+
+        case 0xCD: // SET 1, L
+            registers[REG_L] = SET(1, registers[REG_L]);
+            break;
+
+        case 0xCE: // SET 1, (HL)
+            setHL(SET(1, mmu->read8(getHL())));
+            break;
+
+        case 0xCF: // SET 1, A
+            registers[REG_A] = SET(1, registers[REG_A]);
+            break;
+
+        case 0xD0: // SET 2, B
+            registers[REG_B] = SET(2, registers[REG_B]);
+            break;
+
+        case 0xD1: // SET 2, C
+            registers[REG_C] = SET(2, registers[REG_C]);
+            break;
+
+        case 0xD2: // SET 2, D
+            registers[REG_D] = SET(2, registers[REG_D]);
+            break;
+
+        case 0xD3: // SET 2, E
+            registers[REG_E] = SET(2, registers[REG_E]);
+            break;
+
+        case 0xD4: // SET 2, H
+            registers[REG_H] = SET(2, registers[REG_H]);
+            break;
+
+        case 0xD5: // SET 2, L
+            registers[REG_L] = SET(2, registers[REG_L]);
+            break;
+
+        case 0xD6: // SET 2, (HL)
+            setHL(SET(2, mmu->read8(getHL())));
+            break;
+
+        case 0xD7: // SET 2, A
+            registers[REG_A] = SET(2, registers[REG_A]);
+            break;
+
+        case 0xD8: // SET 3, B
+            registers[REG_B] = SET(3, registers[REG_B]);
+            break;
+
+        case 0xD9: // SET 3, C
+            registers[REG_C] = SET(3, registers[REG_C]);
+            break;
+
+        case 0xDA: // SET 3, D
+            registers[REG_D] = SET(3, registers[REG_D]);
+            break;
+
+        case 0xDB: // SET 3, E
+            registers[REG_E] = SET(3, registers[REG_E]);
+            break;
+
+        case 0xDC: // SET 3, H
+            registers[REG_H] = SET(3, registers[REG_H]);
+            break;
+
+        case 0xDD: // SET 3, L
+            registers[REG_L] = SET(3, registers[REG_L]);
+            break;
+
+        case 0xDE: // SET 3, (HL)
+            setHL(SET(3, mmu->read8(getHL())));
+            break;
+
+        case 0xDF: // SET 3, A
+            registers[REG_A] = SET(3, registers[REG_A]);
+            break;
+
+        case 0xE0: // SET 4, B
+            registers[REG_B] = SET(4, registers[REG_B]);
+            break;
+
+        case 0xE1: // SET 4, C
+            registers[REG_C] = SET(4, registers[REG_C]);
+            break;
+
+        case 0xE2: // SET 4, D
+            registers[REG_D] = SET(4, registers[REG_D]);
+            break;
+
+        case 0xE3: // SET 4, E
+            registers[REG_E] = SET(4, registers[REG_E]);
+            break;
+
+        case 0xE4: // SET 4, H
+            registers[REG_H] = SET(4, registers[REG_H]);
+            break;
+
+        case 0xE5: // SET 4, L
+            registers[REG_L] = SET(4, registers[REG_L]);
+            break;
+
+        case 0xE6: // SET 4, (HL)
+            setHL(RES(4, mmu->read8(getHL())));
+            break;
+
+        case 0xE7: // SET 4, A
+            registers[REG_A] = SET(4, registers[REG_A]);
+            break;
+
+        case 0xE8: // SET 5, B
+            registers[REG_B] = SET(5, registers[REG_B]);
+            break;
+
+        case 0xE9: // SET 5, C
+            registers[REG_C] = SET(5, registers[REG_C]);
+            break;
+
+        case 0xEA: // SET 5, D
+            registers[REG_D] = SET(5, registers[REG_D]);
+            break;
+
+        case 0xEB: // SET 5, E
+            registers[REG_E] = SET(5, registers[REG_E]);
+            break;
+
+        case 0xEC: // SET 5, H
+            registers[REG_H] = SET(5, registers[REG_H]);
+            break;
+
+        case 0xED: // SET 5, L
+            registers[REG_L] = SET(5, registers[REG_L]);
+            break;
+
+        case 0xEE: // SET 5, (HL)
+            setHL(SET(5, mmu->read8(getHL())));
+            break;
+
+        case 0xEF: // SET 5, A
+            registers[REG_A] = SET(5, registers[REG_A]);
+            break;
+
+        case 0xF0: // SET 6, B
+            registers[REG_B] = SET(6, registers[REG_B]);
+            break;
+
+        case 0xF1: // SET 6, C
+            registers[REG_C] = SET(6, registers[REG_C]);
+            break;
+
+        case 0xF2: // SET 6, D
+            registers[REG_D] = SET(6, registers[REG_D]);
+            break;
+
+        case 0xF3: // SET 6, E
+            registers[REG_E] = SET(6, registers[REG_E]);
+            break;
+
+        case 0xF4: // SET 6, H
+            registers[REG_H] = SET(6, registers[REG_H]);
+            break;
+
+        case 0xF5: // SET 6, L
+            registers[REG_L] = SET(6, registers[REG_L]);
+            break;
+
+        case 0xF6: // SET 6, (HL)
+            setHL(SET(6, mmu->read8(getHL())));
+            break;
+
+        case 0xF7: // SET 6, A
+            registers[REG_A] = SET(6, registers[REG_A]);
+            break;
+
+        case 0xF8: // SET 7, B
+            registers[REG_B] = SET(7, registers[REG_B]);
+            break;
+
+        case 0xF9: // SET 7, C
+            registers[REG_C] = SET(7, registers[REG_C]);
+            break;
+
+        case 0xFA: // SET 7, D
+            registers[REG_D] = SET(7, registers[REG_D]);
+            break;
+
+        case 0xFB: // SET 7, E
+            registers[REG_E] = SET(7, registers[REG_E]);
+            break;
+
+        case 0xFC: // SET 7, H
+            registers[REG_H] = SET(7, registers[REG_H]);
+            break;
+
+        case 0xFD: // SET 7, L
+            registers[REG_L] = SET(7, registers[REG_L]);
+            break;
+
+        case 0xFE: // SET 7, (HL)
+            setHL(SET(7, mmu->read8(getHL())));
+            break;
+
+        case 0xFF: // SET 7, A
+            registers[REG_A] = SET(7, registers[REG_A]);
+            break;
+
+        
+        default:
+            std::cerr << "Bad instruction | 0xCB Opcode: " << opcode << " PC: " << pc - 2 << "\n";
+            break;
+    }
+}
+
 
 
 void CPU::setState(int mode)
@@ -1220,6 +2192,7 @@ void CPU::resetGB()
     pc = 0x100;
     sp = 0xFFFE;
     doubleSpeed = false;
+    halt = false;
 }
 
 void CPU::resetCGB()
@@ -1235,6 +2208,7 @@ void CPU::resetCGB()
     pc = 0x100;
     sp = 0xFFFE;
     doubleSpeed = false;
+    halt = false;
 }
 
 void CPU::setZ(bool set) {
@@ -1601,12 +2575,22 @@ uint8_t CPU::SLA(uint8_t val) {
     return res;
 }
 
-uint8_t CPU::SRL(uint8_t val)
-{
+uint8_t CPU::SRL(uint8_t val) {
     uint8_t carry = (val & 0x01);
     uint8_t res = (val >> 1);
 
     setC(carry != 0);
+    setN(false);
+    setH(false);
+    setZ(res == 0);
+    return res;
+}
+
+uint8_t CPU::SWAP(uint8_t val) {
+    uint8_t lower = (val & 0xF) << 4;
+    uint8_t upper = (val >> 4);
+    uint8_t res = lower | upper;
+    setC(false);
     setN(false);
     setH(false);
     setZ(res == 0);
