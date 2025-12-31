@@ -17,7 +17,7 @@ void CPU::connect(MMU *mmu) {
 void CPU::execute() {
     uint8_t opcode = mmu->read8(pc);
 
-    std::cout << "opcode: " << (int)opcode << "\n";
+    std::cout << "opcode: " << (int)opcode << "\n" << "pc: " << pc << "\n";
 
     executeInstruction(opcode);
 

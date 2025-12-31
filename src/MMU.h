@@ -45,7 +45,7 @@ class MMU {
         uint8_t ie = 0x00;
         uint8_t ieFlag = 0x00;
 
-        void setMBC(int type, std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int sRamSize);
+        void setMBC(int type, std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int romSize, int sRamSize);
 };
 
 

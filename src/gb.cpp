@@ -1,4 +1,5 @@
 #include "gb.h"
+#include <iostream>
 
 gb::gb() {
     cpu = CPU();
@@ -18,7 +19,10 @@ gb::~gb()
 
 void gb::run(const char *filename) {
     int mode = mmu.loadRom(filename);
+
+    std::cout << "--------------------------------\n";
     cpu.setState(mode);
-    cpu.execute();
+    while (1)
+        cpu.execute();
 }
 

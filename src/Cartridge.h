@@ -22,6 +22,9 @@ class Cartridge {
         std::vector<std::vector<uint8_t>> ramBank;
 
         std::vector<std::vector<uint8_t>> getRamBank(int sRamSize);
+
+        int romSize;
+        int ramSize;
 };
 
 

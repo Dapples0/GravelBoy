@@ -1,8 +1,10 @@
 #include "NOMBC.h"
 #include <iostream>
-NOMBC::NOMBC(std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int sRamSize) {
+NOMBC::NOMBC(std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int romSize,  int sRamSize) {
     this->romBank = romData;
+    this->romSize = romSize;
     this->ramBank = getRamBank(sRamSize);
+    this->ramSize = 0;
 }
 
 NOMBC::~NOMBC()

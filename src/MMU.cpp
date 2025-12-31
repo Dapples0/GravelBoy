@@ -1,5 +1,6 @@
 #include "MMU.h"
 #include "MBC/NOMBC.h"
+#include "MBC/MBC1.h"
 
 #include <fstream>
 #include <iostream>
@@ -75,26 +76,32 @@ int MMU::loadRom(const char *filename) {
 
     // Sanity Check - ROM Size
 	int headerRomSize = (int)romData[0][0x148];
-	// Print
 	std::cout << "ROM Size: " << 32 * (1 << headerRomSize) << "KB\n";
 
 
     // Determines MBC Type
-    setMBC(type, romData, sRamSize);
+    setMBC(type, romData, romSize, sRamSize);
 
     return cgb;
 
 }
 
-void MMU::setMBC(int type, std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int sRamSize) {
+void MMU::setMBC(int type, std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int romSize, int sRamSize) {
     switch (type) {
         case 0x00: // ROM ONLY
             std::cout << "MBC Type: NOMBC\n";
-            this->rom = std::make_unique<NOMBC>(romData, sRamSize);
+            this->rom = std::make_unique<NOMBC>(romData, romSize, sRamSize);
             break;
 
+        case 0x01: // MBC1
+            std::cout << "MBC Type: MBC1\n";
+            this->rom = std::make_unique<MBC1>(romData, romSize, 0);
+            break;
 
-
+        case 0x02: // MBC1 + RAM
+            std::cout << "MBC Type: MBC1 + RAM\n";
+            this->rom = std::make_unique<MBC1>(romData, romSize, sRamSize);
+            break;     
 
 
         default:
@@ -139,6 +146,7 @@ uint8_t MMU::read8(uint16_t address)
 
     // I/O Registers
     if (address <= 0xFF7F) {
+
         return 0;
     }
 

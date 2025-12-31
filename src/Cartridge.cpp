@@ -44,11 +44,10 @@ std::vector<std::vector<uint8_t>> Cartridge::getRamBank(int sRamSize) {
             numBanks = 8;
             break;
 
-        default: // Defauly to 0x01
+        default: // Default to 0x01
             numBanks = 1;
             break;
     }
-
 
     return std::vector<std::vector<uint8_t>>(numBanks, std::vector<uint8_t>(bankSize));
 }
