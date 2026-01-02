@@ -19,7 +19,7 @@ class MMU {
         // ~MMU();
 
         void connect(GPU *gpu, Joypad *joypad, Timer *timer, APU *apu);
-        int loadRom(const char *filename);
+        bool loadRom(const char *filename);
         uint8_t read8(uint16_t address);
         uint16_t read16(uint16_t address);
         void write8(uint16_t address, uint8_t data);
@@ -32,11 +32,12 @@ class MMU {
         APU *apu;
 
         // Work Ram
-        std::array<std::array<uint8_t, 0x1000>, 8> wram;
-        uint8_t wramBank;
+        std::vector<std::vector<uint8_t>> wram;
+        uint8_t wramBank = 1;
 
         // I/O Registers
         std::array<uint8_t, 0x80> io;
+        uint8_t serialByte;
 
         // High Ram
         std::array<uint8_t, 0x7F> hram;
@@ -45,7 +46,12 @@ class MMU {
         uint8_t ie = 0x00;
         uint8_t ieFlag = 0x00;
 
+        // CGB Flag -> also present in CPU
+        bool cgb;
+
         void setMBC(int type, std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int romSize, int sRamSize);
+        uint8_t readWRAM(uint16_t address);
+        void writeWRAM(uint16_t address, uint8_t data);
 };
 
 

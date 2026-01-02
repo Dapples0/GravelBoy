@@ -1,5 +1,6 @@
 #include "gb.h"
 #include <iostream>
+#include <fstream>
 
 gb::gb() {
     cpu = CPU();
@@ -18,11 +19,22 @@ gb::~gb()
 }
 
 void gb::run(const char *filename) {
-    int mode = mmu.loadRom(filename);
+    bool mode = mmu.loadRom(filename);
 
     std::cout << "--------------------------------\n";
     cpu.setState(mode);
-    while (1)
+    std::ofstream file("cpu_debug.txt");
+    uint32_t i = 0;
+    while (1) {
+        // if (i <= 325820) {
+            file << cpu.debug();
+        // }
+        
         cpu.execute();
+        i++;
+    }
+
+    file.close();
+
 }
 

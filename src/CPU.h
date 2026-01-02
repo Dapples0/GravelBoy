@@ -11,10 +11,15 @@ class CPU {
         void connect(MMU *mmu);
         void setState(int mode);
         void execute();
+
+        std::string debug();
+
         
     private:
         MMU *mmu;
         
+        // debug TODO REMOVE
+        int i = 1;
 
         /** GP Registers
          * 0 - A
@@ -105,7 +110,6 @@ class CPU {
         uint8_t SWAP(uint8_t val);
         uint8_t SET(uint8_t pos, uint8_t reg);
         void BIT(uint8_t pos, uint8_t reg);
-
 
         // Flag helpers
         // void setHAdd(uint8_t left, uint8_t right);

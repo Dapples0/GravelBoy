@@ -1,6 +1,8 @@
 #include "CPU.h"
 
 #include <iostream>
+#include <iomanip>
+
 
 CPU::CPU() {
 
@@ -15,12 +17,16 @@ void CPU::connect(MMU *mmu) {
 }
 
 void CPU::execute() {
-    uint8_t opcode = mmu->read8(pc);
+    
+    
+    // if (!halt) {
+    uint8_t opcode = mmu->read8(pc);     
 
-    std::cout << "opcode: " << (int)opcode << "\n" << "pc: " << pc << "\n";
-
-    executeInstruction(opcode);
-
+    // std::cout << "opcode: " << (int)opcode << "\n" << "pc: " << pc << "\n";    
+        executeInstruction(opcode);
+    // }
+    i++;
+    
     
 }
 
@@ -40,6 +46,7 @@ void CPU::executeInstruction(uint8_t opcode) {
             break;
         case 0x27: // DAA
         {
+            uint8_t tempA = registers[REG_A];
             uint8_t adjustment = 0x00;
             if (getN()) {
                 if (getH()) adjustment += 0x06;
@@ -51,7 +58,7 @@ void CPU::executeInstruction(uint8_t opcode) {
 
 
             } else {
-                if (getH() || (registers[REG_A] & 0x0F > 0x09)) adjustment += 0x06;
+                if (getH() || (registers[REG_A] & 0x0F) > 0x09) adjustment += 0x06;
 
                 if (getC() || (registers[REG_A] > 0x99))  {
                     adjustment += 0x60;
@@ -495,8 +502,8 @@ void CPU::executeInstruction(uint8_t opcode) {
             mmu->write8(0xFF00 + registers[REG_C], registers[REG_A]);
             break;
 
-        case 0xEA: // LF (u16), A
-            mmu->write16(mmu->read16(pc), registers[REG_A]);
+        case 0xEA: // LD (u16), A
+            mmu->write8(mmu->read16(pc), registers[REG_A]);
             pc += 2;
             break;
 
@@ -510,7 +517,7 @@ void CPU::executeInstruction(uint8_t opcode) {
             break;
 
         case 0xFA: // LD A, (u16)
-            registers[REG_A] = mmu->read16(registers[REG_A]);
+            registers[REG_A] = mmu->read8(mmu->read16(pc));
             pc += 2;
             break; 
 
@@ -1072,7 +1079,7 @@ void CPU::executeInstruction(uint8_t opcode) {
          * Stack Manipulation Instructions
          */
         case 0x08: // LD (u16), SP
-            mmu->write16(sp & 0xFF & (mmu->read16(pc)), sp);
+            mmu->write16(mmu->read16(pc), sp);
             pc += 2;
             break;
 
@@ -2169,14 +2176,15 @@ void CPU::executeCBInstruction(uint8_t opcode) {
 
 void CPU::setState(int mode)
 {
-    CGBMode = mode;
-
-    if (!mode) {
-        resetGB();
+    resetGB();
+    // CGBMode = mode;
+    
+    // if (!mode) {
+    //     resetGB();
         
-    } else {
-        resetCGB();
-    }
+    // } else {
+    //     resetCGB();
+    // }
 }
 
 void CPU::resetGB()
@@ -2298,7 +2306,7 @@ void CPU::setHL(uint16_t val) {
 
 void CPU::setAF(uint16_t val) {
     registers[REG_A] = (val >> 8) & 0xFF;
-    registers[REG_F] = val & 0xFF;
+    registers[REG_F] = val & 0xF0;
 }
 
 
@@ -2342,17 +2350,18 @@ void CPU::JP(bool condition) {
 
 void CPU::JR(bool condition) {
     if (condition) {
-        pc += mmu->read8(pc);
-    }
+        pc += (int8_t)mmu->read8(pc);
+    }    
     pc++;
+
 }
 
 
 uint8_t CPU::INC8(uint8_t val) {
+    uint8_t res = val + 1;
+    
     setN(false);
     setH((val & 0xF) + (1 & 0xF) > 0xF);
-    
-    uint8_t res = val + 1;
     setZ(res == 0);
 
     return res;
@@ -2397,7 +2406,7 @@ void CPU::ADC(uint8_t val) {
     setH((registers[REG_A] & 0xF) + (val & 0xF) + carry > 0xF);
     setC((registers[REG_A] + val + carry) > 0xFF);
 
-    registers[REG_A] += carry;
+    registers[REG_A] += carry + val;
 
     setZ(registers[REG_A] == 0);
 }
@@ -2605,4 +2614,29 @@ void CPU::BIT(uint8_t pos, uint8_t reg) {
     setN(false);
     setH(true);
     setZ((reg & (0x01 << pos)) == 0);
+}
+
+std::string CPU::debug() {
+    uint8_t opcode = mmu->read8(pc);
+    // std::cout << i << " | ";
+    std::ostringstream ss;
+    ss << std::hex << std::uppercase << std::setfill('0')
+        << "A:"  << std::setw(2) <<  (int)registers[REG_A] << " "
+        << "F:"  << std::setw(2) <<  (int)registers[REG_F] << " "
+        << "B:"  << std::setw(2) <<  (int)registers[REG_B] << " "
+        << "C:"  << std::setw(2) <<  (int)registers[REG_C] << " "
+        << "D:"  << std::setw(2) <<  (int)registers[REG_D] << " "
+        << "E:"  << std::setw(2) <<  (int)registers[REG_E] << " "
+        << "H:"  << std::setw(2) <<  (int)registers[REG_H] << " "
+        << "L:"  << std::setw(2) <<  (int)registers[REG_L] << " "
+        << "SP:" << std::setw(4) << sp << " "
+        << "PC:" << std::setw(4) << pc << " "
+        << "PCMEM:"
+        << std::setw(2) << (int)opcode << ","
+        << std::setw(2) << (int)mmu->read8(pc + 1) << ","
+        << std::setw(2) << (int)mmu->read8(pc + 2) << ","
+        << std::setw(2) << (int)mmu->read8(pc + 3)
+        << std::dec << "\n";
+
+    return ss.str();
 }

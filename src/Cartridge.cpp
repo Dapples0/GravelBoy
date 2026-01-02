@@ -1,5 +1,6 @@
 #include "Cartridge.h"
 
+#include <iostream>
 Cartridge::Cartridge()
 {
 }
