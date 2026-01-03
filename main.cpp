@@ -6,7 +6,7 @@
 int main() {
     gb gb;
 
-    gb.run("rom/01-special.gb");
+    gb.run("rom/11-op a,(hl).gb");
 
 
 

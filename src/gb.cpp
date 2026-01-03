@@ -23,7 +23,7 @@ void gb::run(const char *filename) {
 
     std::cout << "--------------------------------\n";
     cpu.setState(mode);
-    std::ofstream file("cpu_debug.txt");
+    std::ofstream file("logs/cpu_debug.txt");
     uint32_t i = 0;
     while (1) {
         // if (i <= 325820) {
