@@ -92,12 +92,7 @@ void Timer::tick(uint32_t cyclesPassed) {
         bool postTimerCheck = timerControlCheck();
 
         if (preTimerCheck && !postTimerCheck) {
-            if (TIMA == 0xFF) {
-                TIMA = 0;
-                TIMADelay = 4;
-            } else {
-                TIMA++;
-            }
+            incrementTIMA();
         }
     }
 }

@@ -75,8 +75,8 @@ bool MMU::loadRom(const char *filename) {
 
     // Determines MBC Type
     setMBC(type, romData, romSize, sRamSize);
-    // this->cgb = cgb == 0xC0 || cgb == 0x80;
-    this->cgb = false;
+    this->cgb = cgb == 0xC0 || cgb == 0x80;
+    // this->cgb = false;
     this->wram = this->cgb 
     ? std::vector<std::vector<uint8_t>>(8, std::vector<uint8_t>(WRAM_BANK_SIZE)) 
     : std::vector<std::vector<uint8_t>>(2, std::vector<uint8_t>(WRAM_BANK_SIZE));
@@ -117,7 +117,6 @@ uint8_t MMU::read8(uint16_t address)
         return 0x90; // Fake a VBlank (144) so the test can proceed
     }
  
-    // REMEMBER TO CONSIDER OFFSETS
     // ROM Bank
     if (address >= 0x0000 && address <= 0x7FFF) {
         // skip boot rom
@@ -182,9 +181,9 @@ uint8_t MMU::read8(uint16_t address)
         return 0x0;
     }
 
-    // KEY1 TODO
+    // KEY1
     if (cgb && address == 0xFF4D) {
-        return 0x0;
+        return key1;
     }
     // VRAM Bank Select TODO
     if (cgb && address == 0xFF4F) {
@@ -229,7 +228,7 @@ void MMU::write8(uint16_t address, uint8_t data) {
     // VRAM TODO 
     else if (address >= 0x8000 && address <= 0x9FFF) {
     }
-    // External RAM TODO
+    // External RAM
     else if (address >= 0xA000 && address <= 0xBFFF) {
         this->rom->write(address, data);
     }
@@ -259,7 +258,7 @@ void MMU::write8(uint16_t address, uint8_t data) {
             std::cout << (char)serialByte << std::flush;
         }
     }
-    // Timer and Divider TODO
+    // Timer and Divider
     else if (address >= 0xFF04 && address <= 0xFF07) {
         timer->write(address, data);
     }
@@ -278,8 +277,10 @@ void MMU::write8(uint16_t address, uint8_t data) {
     }
     // OAM DMA transfer TODO
     else if (address == 0xFF46) {}
-    // KEY1 TODO
-    else if (cgb && address == 0xFF4D) {}
+    // KEY1
+    else if (cgb && address == 0xFF4D) {
+        key1 = data;
+    }
     // VRAM Bank Select TODO
     else if (cgb && address == 0xFF4F) {}
     // Boot rom map TODO

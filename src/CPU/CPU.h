@@ -55,7 +55,7 @@ class CPU {
         void executeInstruction(uint8_t opcode);
         void executeCBInstruction(uint8_t opcode);
     
-        void handleInterrupts();
+        uint32_t handleInterrupts();
     
         // Set Flag Registers
         void setZ(bool set);

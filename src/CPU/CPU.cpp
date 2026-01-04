@@ -17,18 +17,18 @@ void CPU::connect(MMU *mmu) {
 }
 
 uint32_t CPU::execute() {
-    
-    handleInterrupts();
+    // Reset cycles
+    cyclesPassed = 0;
+    uint32_t interruptCycles = handleInterrupts();
     if (!halt) {
-        uint8_t opcode = mmu->read8(pc);     
+        uint8_t opcode = mmu->read8(pc);
         executeInstruction(opcode);
-        cycles += cyclesPassed;
 
     } else {
-        cyclesPassed = 4;
-        cycles += cyclesPassed;
+        cyclesPassed += 4;
     }
-    
+
+    cycles += cyclesPassed + interruptCycles;
     return cyclesPassed;
 }
 
@@ -79,16 +79,16 @@ void CPU::executeInstruction(uint8_t opcode) {
             break;
             
 
-        case 0x10: // STOP - NOTES: As per pandocs, licensed roms do not use STOP outside of GCB speed switching. So implementing DMG slow mode might not be necessary/can be implemented later as a TODO
+        case 0x10: // STOP 
         {
             // Only used for CGB
             if (!CGBMode) {
                 return;
             }
             uint8_t key1 = mmu->read8(0xFF4D);
-
             // If armed switch to other mode
             if ((key1 & 0x01) == 0x01) {
+                
                 doubleSpeed = !doubleSpeed;
 
                 // Clear bit0 and set speed
@@ -2196,16 +2196,16 @@ void CPU::executeCBInstruction(uint8_t opcode) {
 
 void CPU::setState(int mode)
 {
-    resetGB();
-    CGBMode = false;
-    // CGBMode = mode;
+    // resetGB();
+    // CGBMode = false;
+    CGBMode = mode;
     
-    // if (!mode) {
-    //     resetGB();
+    if (!mode) {
+        resetGB();
         
-    // } else {
-    //     resetCGB();
-    // }
+    } else {
+        resetCGB();
+    }
 }
 
 void CPU::resetGB()
@@ -2677,14 +2677,15 @@ bool CPU::getDoubleSpeed()
 }
 
 
-void CPU::handleInterrupts() {
+
+uint32_t CPU::handleInterrupts() {
     uint8_t iFlag = mmu->read8(IF_ADDRESS);
     uint8_t ie = mmu->read8(IE_ADDRESS);
-    
+    uint32_t interruptCycles = 0;
     if (ei_hold) {
         ime = true;
         ei_hold = false;
-        return;
+        return interruptCycles;
     }
 
     // vBlank
@@ -2695,7 +2696,7 @@ void CPU::handleInterrupts() {
             ei_hold = false;
             mmu->write8(IF_ADDRESS, iFlag & ~VBLANK_BIT);
 
-            cycles += 20;
+            interruptCycles = 20;
             RST(VBLANK_INT);
         }
     } 
@@ -2707,7 +2708,7 @@ void CPU::handleInterrupts() {
             ei_hold = false;
             mmu->write8(IF_ADDRESS, iFlag & ~LCD_BIT);
 
-            cycles += 20;
+            interruptCycles = 20;
             RST(STAT_INT);
         }
     } 
@@ -2719,7 +2720,7 @@ void CPU::handleInterrupts() {
             ei_hold = false;
             mmu->write8(IF_ADDRESS, iFlag & ~TIMER_BIT);
 
-            cycles += 20;
+            interruptCycles = 20;
             RST(TIMER_INT);
         }
     }
@@ -2731,7 +2732,7 @@ void CPU::handleInterrupts() {
             ei_hold = false;
             mmu->write8(IF_ADDRESS, iFlag & ~SERIAL_BIT);
 
-            cycles += 20;
+            interruptCycles = 20;
             RST(SERIAL_INT);
         }
     }
@@ -2743,8 +2744,10 @@ void CPU::handleInterrupts() {
             ei_hold = false;
             mmu->write8(IF_ADDRESS, iFlag & ~JOYPAD_BIT);
 
-            cycles += 20;
+            interruptCycles = 20;
             RST(JOYPAD_INT);
         }
-    } 
+    }
+
+    return interruptCycles;
 }
