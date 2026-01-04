@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fstream>
 
-gb::gb() : cpu(), apu(), gpu(), joypad(), mmu(), timer() {
+gb::gb() : cpu(), apu(), gpu(), joypad(), mmu(), timer(), interrupt() {
     // cpu = CPU();
     // apu = APU();
     // gpu = GPU();
@@ -11,8 +11,8 @@ gb::gb() : cpu(), apu(), gpu(), joypad(), mmu(), timer() {
     // timer = Timer();
 
     cpu.connect(&mmu);
-    mmu.connect(&gpu, &joypad, &timer, &apu);
-    // timer.connect(&mmu);
+    mmu.connect(&gpu, &joypad, &timer, &apu, &interrupt);
+    timer.connect(&interrupt);
     
 }
 
@@ -32,7 +32,11 @@ void gb::run(const char *filename) {
             file << cpu.debug();
         // }
         
-        cpu.execute();
+        uint32_t cyclesPassed = cpu.execute();
+        if (cpu.getDoubleSpeed()) {
+        } 
+        timer.tick(cyclesPassed);
+        
         i++;
     }
 

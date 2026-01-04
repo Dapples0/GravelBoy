@@ -8,6 +8,7 @@
 #include "Memory/MMU.h"
 #include "Cartridge/Cartridge.h"
 #include "IO/Timer.h"
+#include "IO/Interrupts.h"
 
 
 
@@ -27,6 +28,7 @@ class gb {
         Joypad joypad;
         MMU mmu;
         Timer timer;
+        Interrupts interrupt;
 
 };
 

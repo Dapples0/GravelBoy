@@ -13,6 +13,7 @@
 #include "../IO/Timer.h"
 #include "../Cartridge/MBC/NOMBC.h"
 #include "../Cartridge/MBC/MBC1.h"
+#include "../IO/Interrupts.h"
 
 
 class MMU {
@@ -20,7 +21,7 @@ class MMU {
         MMU();
         ~MMU();
 
-        void connect(GPU *gpu, Joypad *joypad, Timer *timer, APU *apu);
+        void connect(GPU *gpu, Joypad *joypad, Timer *timer, APU *apu, Interrupts *interrupt);
         bool loadRom(const char *filename);
         uint8_t read8(uint16_t address);
         uint16_t read16(uint16_t address);
@@ -37,6 +38,7 @@ class MMU {
         Joypad *joypad; // Input
         Timer *timer; // Timer
         APU *apu;
+        Interrupts *interrupt;
 
         // Work Ram
         std::vector<std::vector<uint8_t>> wram;
@@ -48,10 +50,6 @@ class MMU {
 
         // High Ram
         std::array<uint8_t, 0x7F> hram;
-
-        // Interrupt Enable Registers
-        uint8_t IF = 0x00;
-        uint8_t IE = 0x00;
 
         // CGB Flag -> also present in CPU
         bool cgb;

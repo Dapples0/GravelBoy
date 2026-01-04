@@ -16,7 +16,7 @@ void CPU::connect(MMU *mmu) {
     this->mmu = mmu;
 }
 
-void CPU::execute() {
+uint32_t CPU::execute() {
     
     handleInterrupts();
     if (!halt) {
@@ -25,10 +25,11 @@ void CPU::execute() {
         cycles += cyclesPassed;
 
     } else {
-        cycles += 4;
+        cyclesPassed = 4;
+        cycles += cyclesPassed;
     }
     
-    
+    return cyclesPassed;
 }
 
 void CPU::executeInstruction(uint8_t opcode) {
@@ -2674,6 +2675,7 @@ bool CPU::getDoubleSpeed()
 {
     return doubleSpeed;
 }
+
 
 void CPU::handleInterrupts() {
     uint8_t iFlag = mmu->read8(IF_ADDRESS);

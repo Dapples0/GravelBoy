@@ -19,6 +19,10 @@
 
 #define IE_ADDRESS 0xFFFF
 #define IF_ADDRESS 0xFF0F
+#define DIV_ADDRESS 0xFF04
+#define TIMA_ADDRESS 0xFF05
+#define TMA_ADDRESS 0xFF06
+#define TAC_ADDRESS 0xFF07
 
 #define VBLANK_BIT 0x01
 #define LCD_BIT 0x02
@@ -30,4 +34,8 @@
 #define TIMER_INT 0x50
 #define SERIAL_INT 0x58
 #define JOYPAD_INT 0x60
+
+#define CLOCK_SPEED 0x400000
+#define DOUBLE_CLOCK_SPEED 0x800000
+#define DIV_RATE 0x4000
 #endif

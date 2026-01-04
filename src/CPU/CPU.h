@@ -10,7 +10,7 @@ class CPU {
 
         void connect(MMU *mmu);
         void setState(int mode);
-        void execute();
+        uint32_t execute();
 
         std::string debug();
 
@@ -44,8 +44,8 @@ class CPU {
 
 
         // Cycle handling
-        int cycles = 0;
-        int cyclesPassed;
+        uint32_t cycles = 0;
+        uint32_t cyclesPassed;
 
         int CGBMode;
         bool doubleSpeed;
