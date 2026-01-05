@@ -95,7 +95,9 @@ class CPU {
 
         // Arithmic Operations
         uint8_t INC8(uint8_t val);
+        uint16_t INC16(uint16_t val);
         uint8_t DEC8(uint8_t val);
+        uint16_t DEC16(uint16_t val);
         void ADD8(uint8_t val);
         void ADD16(uint16_t val);
         void ADC(uint8_t val);

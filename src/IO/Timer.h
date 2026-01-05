@@ -29,7 +29,6 @@ class Timer {
         bool timerControlCheck();
         void incrementTIMA();
 
-
 };
 
 

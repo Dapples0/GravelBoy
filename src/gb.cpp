@@ -28,14 +28,15 @@ void gb::run(const char *filename) {
     std::ofstream file("logs/cpu_debug.txt");
     uint32_t i = 0;
     while (1) {
-        if (i <= 325820) {
-            file << cpu.debug();
-        }
+        // if (i <= 325820) {
+            // file << cpu.debug();
+        // }
         
         cpu.execute();
         if (cpu.getDoubleSpeed()) {
-        } 
-
+        }
+        // std::cout << std::dec << "Cycles Used: " << (int)mmu.cycles << "\n";
+        mmu.cycles = 0;
         i++;
     }
 

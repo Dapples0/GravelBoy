@@ -433,7 +433,7 @@ uint8_t MMU::readPeek(uint16_t address)
         res = 0xFF;
     }
 
-    // Timer and Divider TODO
+    // Timer and Divider
     else if (address >= 0xFF04 && address <= 0xFF07) {
         res = timer->read(address);
     }

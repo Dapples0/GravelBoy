@@ -22,12 +22,17 @@ void CPU::execute() {
     if (!halt) {
         uint8_t opcode = mmu->read8(pc);
         executeInstruction(opcode);
-
+        // std::cout << std::hex << std::uppercase << std::setfill('0') << std::setw(2) <<  (int)opcode << " | ";
     } else {
         this->mmu->tick(4);
     }
     handleInterrupts();
 
+    if (ei_hold) {
+        ime = true;
+        ei_hold = false;
+        return;
+    }
 }
 
 void CPU::executeInstruction(uint8_t opcode) {
@@ -743,16 +748,16 @@ void CPU::executeInstruction(uint8_t opcode) {
          * 16-bit Arithmetic Instructions
          */ 
         case 0x03: // INC BC
-            setBC(getBC() + 1);
+            setBC(INC16(getBC()));
             break;
             
 
         case 0x13: // INC DE
-            setDE(getDE() + 1);
+            setDE(INC16(getDE()));
             break;
         
         case 0x23: // INC HL
-            setHL(getHL() + 1);
+            setHL(INC16(getHL()));
             break;
 
         case 0x09: // ADD HL, BC
@@ -1103,6 +1108,7 @@ void CPU::executeInstruction(uint8_t opcode) {
 
         case 0x33: // INC SP
             sp++;
+            mmu->tick(4);
             break;
         
         case 0x39: // ADD HL, SP
@@ -2391,9 +2397,9 @@ void CPU::JP(bool condition) {
 void CPU::JR(bool condition) {
     int8_t addr = (int8_t)mmu->read8(pc);
     if (condition) {
-        mmu->tick(4);
+        
         pc += addr;
-
+        mmu->tick(4);
         // With condition cycles passed is 12
         // cyclesPassed = 12;
     }    
@@ -2406,12 +2412,16 @@ uint8_t CPU::INC8(uint8_t val) {
     uint8_t res = val + 1;
     
     setN(false);
-    setH((val & 0xF) + (1 & 0xF) > 0xF);
+    setH(((val & 0xF) + 1) > 0xF);
     setZ(res == 0);
 
     return res;
 }
 
+uint16_t CPU::INC16(uint16_t val) {
+    mmu->tick(4);
+    return val + 1;
+}
 
 uint8_t CPU::DEC8(uint8_t val) {
     setN(true);
@@ -2421,6 +2431,11 @@ uint8_t CPU::DEC8(uint8_t val) {
     setZ(res == 0);
 
     return res;
+}
+
+uint16_t CPU::DEC16(uint16_t val) {
+    mmu->tick(4);
+    return val - 1;
 }
 
 void CPU::ADD8(uint8_t val) {
@@ -2438,9 +2453,9 @@ void CPU::ADD16(uint16_t val) {
     setN(false);
     setC(res > 0xFFFF);
     setH(((getHL() & 0x0FFF) + (val & 0x0FFF)) > 0x0FFF);
-    mmu->tick(4);
     // Set H and L registers
     setHL(res);
+    mmu->tick(4);
 }
 
 void CPU::ADC(uint8_t val) {
@@ -2692,11 +2707,7 @@ bool CPU::getDoubleSpeed()
 
 
 void CPU::handleInterrupts() {
-    if (ei_hold) {
-        ime = true;
-        ei_hold = false;
-        return;
-    }
+
 
     uint8_t iFlag = mmu->getIF();
     uint8_t ie = mmu->getIE();
@@ -2710,6 +2721,15 @@ void CPU::handleInterrupts() {
     ime = false;
     ei_hold = false;
 
+
+
+    // Service two wait states
+    mmu->tick(4);
+    mmu->tick(4);
+
+    // Push PC onto stack
+    sp -= 2;
+    mmu->write16(sp, pc);
     uint16_t address = 0x0000;
 
     if (pending & VBLANK_BIT) {
@@ -2732,19 +2752,9 @@ void CPU::handleInterrupts() {
         mmu->setIF(iFlag & ~JOYPAD_BIT); 
         address = JOYPAD_INT; 
     }
-
-    // Service two wait states
-    mmu->tick(4);
-    mmu->tick(4);
-
-    // Push PC onto stack
-    sp -= 2;
-    mmu->write16(sp, pc);
-
     // Set address to handler
     pc = address;
     mmu->tick(4);
 
 
 }
-
