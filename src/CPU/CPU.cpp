@@ -2657,7 +2657,7 @@ void CPU::BIT(uint8_t pos, uint8_t reg) {
 }
 
 std::string CPU::debug() {
-    uint8_t opcode = mmu->read8(pc);
+    uint8_t opcode = mmu->readPeek(pc);
     // std::cout << i << " | ";
     std::ostringstream ss;
     ss << std::hex << std::uppercase << std::setfill('0')
@@ -2673,9 +2673,9 @@ std::string CPU::debug() {
         << "PC:" << std::setw(4) << pc << " "
         << "PCMEM:"
         << std::setw(2) << (int)opcode << ","
-        << std::setw(2) << (int)mmu->read8(pc + 1) << ","
-        << std::setw(2) << (int)mmu->read8(pc + 2) << ","
-        << std::setw(2) << (int)mmu->read8(pc + 3)
+        << std::setw(2) << (int)mmu->readPeek(pc + 1) << ","
+        << std::setw(2) << (int)mmu->readPeek(pc + 2) << ","
+        << std::setw(2) << (int)mmu->readPeek(pc + 3)
         << std::dec << "\n";
 
     return ss.str();

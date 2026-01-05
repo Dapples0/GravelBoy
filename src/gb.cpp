@@ -28,10 +28,9 @@ void gb::run(const char *filename) {
     std::ofstream file("logs/cpu_debug.txt");
     uint32_t i = 0;
     while (1) {
-        // if (i <= 325820) {
-        // Need to update debug since it calls read/write
-            // file << cpu.debug();
-        // }
+        if (i <= 325820) {
+            file << cpu.debug();
+        }
         
         cpu.execute();
         if (cpu.getDoubleSpeed()) {

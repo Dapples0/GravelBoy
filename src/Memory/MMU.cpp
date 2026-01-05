@@ -43,7 +43,6 @@ bool MMU::loadRom(const char *filename) {
         stream.close();
     } else {
         std::cout << "Bad ROM" << "\n";
-        exit(1);
     }
     // Sanity check - Title
 	char title[17];
@@ -380,7 +379,111 @@ void MMU::setIE(uint8_t data)
 
 void MMU::tick(uint8_t val) {
     // for (int i = 0; i < val; ++i) {
-    //     timer->tick(i);
+    //     timer->tick(1);
     // }
     timer->tick(4);
+}
+
+
+uint8_t MMU::readPeek(uint16_t address)
+{
+
+    uint8_t res = 0x00;
+    // std::cout << "Reading from " << address << "\n";
+    // TEMP TODO: REMOVE
+    if (address == 0xFF44) {
+        res = 0x90; // Fake a VBlank (144) so the test can proceed
+    }
+ 
+    // ROM Bank
+    else if (address >= 0x0000 && address <= 0x7FFF) {
+        // skip boot rom
+        res = this->rom->read(address);
+    }
+    
+    // VRAM TODO
+    else if (address >= 0x8000 && address <= 0x9FFF) {
+        res = 0x0;
+    }
+
+    // External RAM TODO
+    else if (address >= 0xA000 && address <= 0xBFFF) {
+        res = this->rom->read(address);
+    }
+
+    // WRAM + Echo RAM
+    else if (address >= 0xC000 && address <= 0xFDFF) {
+
+        res = this->readWRAM(address);
+    }
+
+    // OAM RAM TODO
+    else if (address >= 0xFE00 && address <= 0xFE9F) {
+        res = 0x0;
+    }
+    // High RAM
+    else if (address >= 0xFF80 && address <= 0xFFFE) {
+        res = hram[address & 0x7F];
+    }
+
+
+    // Joypad TODO
+    else if (address == 0xFF00) {
+        res = 0xFF;
+    }
+
+    // Timer and Divider TODO
+    else if (address >= 0xFF04 && address <= 0xFF07) {
+        res = timer->read(address);
+    }
+
+    // IF
+    else if (address == 0xFF0F) {
+        res = this->interrupt->getIF();
+    }
+
+    // Audio TODO
+    else if (address >= 0xFF10 && address <= 0xFF3F) {
+        res = 0x0;
+
+    }
+
+    // GPU TODO
+    else if (address >= 0xFF40 && address <= 0xFF4B) {
+        res = 0x0;
+
+    }
+
+    // OAM DMA transfer TODO
+    else if (address == 0xFF46) {
+        res = 0x0;
+    }
+
+    // KEY1
+    else if (cgb && address == 0xFF4D) {
+        res = key1;
+    }
+    // VRAM Bank Select TODO
+    else if (cgb && address == 0xFF4F) {
+        res = 0x0;
+    }
+    // Boot ROM Map TODO
+    else if (address == 0xFF50) {}
+    // VRAM DMA TODO
+    else if (cgb && address >= 0xFF51 && address <= 0xFF55) {
+        res = 0x0;
+    }
+    // BG / OBJ Palettes TOOD
+    else if (cgb && address >= 0xFF68 && address <= 0xFF6B) {
+        res = 0x0;
+    }
+    // WRAM Bank Select
+    else if (cgb && address == 0xFF70) {
+        res = wramBank | 0xF8;
+    }
+    // IE
+    else if (address == 0xFFFF) {
+        res = this->interrupt->getIE();
+    }
+    return res;
 }

@@ -34,6 +34,9 @@ class MMU {
         void setIE(uint8_t val);
 
         void tick(uint8_t val);
+
+        // Debugging read
+        uint8_t readPeek(uint16_t address);
     private:
         std::unique_ptr<Cartridge> rom; // ROM Banks + External RAM
         GPU *gpu; // VRAM + Echo RAM + OAM
