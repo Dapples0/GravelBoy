@@ -6,7 +6,7 @@
 int main() {
     gb gb;
 
-    gb.run("rom/01-read_timing.gb");
+    gb.run("rom/instr_timing.gb");
 
 
 

@@ -65,7 +65,7 @@ uint8_t Timer::read(uint16_t address) {
         return TMA;
     }
     if (address == TAC_ADDRESS) {
-        return TAC;
+        return TAC & 0x07;
     } 
 
 

@@ -10,7 +10,7 @@ class CPU {
 
         void connect(MMU *mmu);
         void setState(int mode);
-        uint32_t execute();
+        void execute();
 
         std::string debug();
 
@@ -18,6 +18,7 @@ class CPU {
         
     private:
         MMU *mmu;
+        Timer *timer;
         
 
         /** GP Registers
@@ -55,7 +56,9 @@ class CPU {
         void executeInstruction(uint8_t opcode);
         void executeCBInstruction(uint8_t opcode);
     
-        uint32_t handleInterrupts();
+        void handleInterrupts();
+
+        void tick();
     
         // Set Flag Registers
         void setZ(bool set);

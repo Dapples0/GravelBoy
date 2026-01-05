@@ -32,6 +32,8 @@ class MMU {
         uint8_t getIE();
         void setIF(uint8_t val);
         void setIE(uint8_t val);
+
+        void tick(uint8_t val);
     private:
         std::unique_ptr<Cartridge> rom; // ROM Banks + External RAM
         GPU *gpu; // VRAM + Echo RAM + OAM

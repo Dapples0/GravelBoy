@@ -29,13 +29,13 @@ void gb::run(const char *filename) {
     uint32_t i = 0;
     while (1) {
         // if (i <= 325820) {
-            file << cpu.debug();
+        // Need to update debug since it calls read/write
+            // file << cpu.debug();
         // }
         
-        uint32_t cyclesPassed = cpu.execute();
+        cpu.execute();
         if (cpu.getDoubleSpeed()) {
         } 
-        timer.tick(cyclesPassed);
         
         i++;
     }

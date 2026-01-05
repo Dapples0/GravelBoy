@@ -111,105 +111,105 @@ void MMU::setMBC(int type, std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romDa
 
 uint8_t MMU::read8(uint16_t address)
 {
+    uint8_t res = 0x00;
     // std::cout << "Reading from " << address << "\n";
     // TEMP TODO: REMOVE
     if (address == 0xFF44) {
-        return 0x90; // Fake a VBlank (144) so the test can proceed
+        res = 0x90; // Fake a VBlank (144) so the test can proceed
     }
  
     // ROM Bank
     if (address >= 0x0000 && address <= 0x7FFF) {
         // skip boot rom
-        return this->rom->read(address);
+        res = this->rom->read(address);
     }
     
     // VRAM TODO
     if (address >= 0x8000 && address <= 0x9FFF) {
-        return 0x0;
+        res = 0x0;
     }
 
     // External RAM TODO
     if (address >= 0xA000 && address <= 0xBFFF) {
-        return this->rom->read(address);
+        res = this->rom->read(address);
     }
 
     // WRAM + Echo RAM
     if (address >= 0xC000 && address <= 0xFDFF) {
 
-        return this->readWRAM(address);
+        res = this->readWRAM(address);
     }
 
     // OAM RAM TODO
     if (address >= 0xFE00 && address <= 0xFE9F) {
-        return 0x0;
+        res = 0x0;
     }
     // High RAM
     if (address >= 0xFF80 && address <= 0xFFFE) {
-        return hram[address & 0x7F];
+        res = hram[address & 0x7F];
     }
 
 
     // Joypad TODO
     if (address == 0xFF00) {
-        return 0xFF;
+        res = 0xFF;
     }
 
     // Timer and Divider TODO
     if (address >= 0xFF04 && address <= 0xFF07) {
-        return timer->read(address);
+        res = timer->read(address);
     }
 
     // IF
     if (address == 0xFF0F) {
-        return this->interrupt->getIF();
+        res = this->interrupt->getIF();
     }
 
     // Audio TODO
     if (address >= 0xFF10 && address <= 0xFF3F) {
-        return 0x0;
+        res = 0x0;
 
     }
 
     // GPU TODO
     if (address >= 0xFF40 && address <= 0xFF4B) {
-        return 0x0;
+        res = 0x0;
 
     }
 
     // OAM DMA transfer TODO
     if (address == 0xFF46) {
-        return 0x0;
+        res = 0x0;
     }
 
     // KEY1
     if (cgb && address == 0xFF4D) {
-        return key1;
+        res = key1;
     }
     // VRAM Bank Select TODO
     if (cgb && address == 0xFF4F) {
-        return 0x0;
+        res = 0x0;
     }
     // Boot ROM Map TODO
     if (address == 0xFF50) {}
     // VRAM DMA TODO
     if (cgb && address >= 0xFF51 && address <= 0xFF55) {
-        return 0x0;
+        res = 0x0;
     }
     // BG / OBJ Palettes TOOD
     if (cgb && address >= 0xFF68 && address <= 0xFF6B) {
-        return 0x0;
+        res = 0x0;
     }
     // WRAM Bank Select
     if (cgb && address == 0xFF70) {
-        return wramBank | 0xF8;
+        res = wramBank | 0xF8;
     }
     // IE
     if (address == 0xFFFF) {
-        return this->interrupt->getIE();
+        res = this->interrupt->getIE();
     }
-
-    // Invalid Read
-    return 0x0;
+    tick(4);
+    return res;
 }
 
 uint16_t MMU::read16(uint16_t address)
@@ -221,7 +221,6 @@ uint16_t MMU::read16(uint16_t address)
 
 void MMU::write8(uint16_t address, uint8_t data) {
     // std::cout << "Writing to " << address << "\n";
-
     if (address >= 0x0000 && address <= 0x7FFF) {
         this->rom->write(address, data);
     }
@@ -302,6 +301,8 @@ void MMU::write8(uint16_t address, uint8_t data) {
     else if (address == 0xFFFF) {
         this->interrupt->setIE(data);
     }
+
+    tick(4);
 }
 
 void MMU::write16(uint16_t address, uint16_t data)
@@ -354,4 +355,8 @@ void MMU::writeWRAM(uint16_t address, uint8_t data) {
         }
         wram[bank][relative_address] = data;
     }
+}
+
+void MMU::tick(uint8_t val) {
+    timer->tick(4);
 }

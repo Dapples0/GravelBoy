@@ -16,27 +16,25 @@ void CPU::connect(MMU *mmu) {
     this->mmu = mmu;
 }
 
-uint32_t CPU::execute() {
+void CPU::execute() {
     // Reset cycles
-    cyclesPassed = 0;
-    uint32_t interruptCycles = handleInterrupts();
+    handleInterrupts();
     if (!halt) {
         uint8_t opcode = mmu->read8(pc);
         executeInstruction(opcode);
 
     } else {
-        cyclesPassed += 4;
+        this->mmu->tick(4);
     }
+    
 
-    cycles += cyclesPassed + interruptCycles;
-    return cyclesPassed;
 }
 
 void CPU::executeInstruction(uint8_t opcode) {
 
     pc++;
     
-    cyclesPassed = opcodeCycles[opcode];
+    // cyclesPassed = opcodeCycles[opcode];
     switch (opcode) {
         case 0xCB: // 0xCB Prefixed
             executeCBInstruction(mmu->read8(pc));
@@ -85,6 +83,7 @@ void CPU::executeInstruction(uint8_t opcode) {
             if (!CGBMode) {
                 return;
             }
+            std::cout << "STOP executed \n";
             uint8_t key1 = mmu->read8(0xFF4D);
             // If armed switch to other mode
             if ((key1 & 0x01) == 0x01) {
@@ -1018,7 +1017,7 @@ void CPU::executeInstruction(uint8_t opcode) {
             RET(true);
 
             // Unconditonal RET has cycles be 16
-            cyclesPassed = 16;
+            // cyclesPassed = 16;
             break;
 
         case 0xD0: // RET NC
@@ -1038,7 +1037,7 @@ void CPU::executeInstruction(uint8_t opcode) {
 
 
             // Unconditonal RETI has cycles be 16
-            cyclesPassed = 16;
+            // cyclesPassed = 16;
             break;
         
         case 0xC7: // RST 00h
@@ -1219,7 +1218,7 @@ void CPU::executeInstruction(uint8_t opcode) {
 
 void CPU::executeCBInstruction(uint8_t opcode) {
     pc++;
-    cyclesPassed = opcodeCBCycles[opcode];
+    // cyclesPassed = opcodeCBCycles[opcode];
     switch (opcode) {
         /**
          * RLC Instructions 
@@ -2339,7 +2338,7 @@ void CPU::RET(bool condition) {
         pc = (high << 8) | low;
         
         // With condition cycles passed is 20
-        cyclesPassed = 20;
+        // cyclesPassed = 20;
         // pc = mmu->read8(sp++);
         // sp += 2;
     }
@@ -2356,7 +2355,7 @@ void CPU::CALL(bool condition) {
         pc = address;
 
         // With condition cycles passed is 12
-        cyclesPassed = 24;
+        // cyclesPassed = 24;
     }
 }
 
@@ -2371,7 +2370,7 @@ void CPU::JP(bool condition) {
         pc = mmu->read16(pc);
 
         // With condition cycles passed is 16
-        cyclesPassed = 16;
+        // cyclesPassed = 16;
     } else {
         pc += 2;
     }
@@ -2382,7 +2381,7 @@ void CPU::JR(bool condition) {
         pc += (int8_t)mmu->read8(pc);
 
         // With condition cycles passed is 12
-        cyclesPassed = 12;
+        // cyclesPassed = 12;
     }    
     pc++;
 
@@ -2678,16 +2677,14 @@ bool CPU::getDoubleSpeed()
 
 
 
-uint32_t CPU::handleInterrupts() {
-    uint8_t iFlag = mmu->read8(IF_ADDRESS);
-    uint8_t ie = mmu->read8(IE_ADDRESS);
-    uint32_t interruptCycles = 0;
+void CPU::handleInterrupts() {
     if (ei_hold) {
         ime = true;
         ei_hold = false;
-        return interruptCycles;
+        return;
     }
-
+    uint8_t iFlag = mmu->read8(IF_ADDRESS);
+    uint8_t ie = mmu->read8(IE_ADDRESS);
     // vBlank
     if ((iFlag & VBLANK_BIT) != 0 && (ie & VBLANK_BIT) != 0) {
         halt = false;
@@ -2696,7 +2693,6 @@ uint32_t CPU::handleInterrupts() {
             ei_hold = false;
             mmu->write8(IF_ADDRESS, iFlag & ~VBLANK_BIT);
 
-            interruptCycles = 20;
             RST(VBLANK_INT);
         }
     } 
@@ -2708,7 +2704,6 @@ uint32_t CPU::handleInterrupts() {
             ei_hold = false;
             mmu->write8(IF_ADDRESS, iFlag & ~LCD_BIT);
 
-            interruptCycles = 20;
             RST(STAT_INT);
         }
     } 
@@ -2720,7 +2715,6 @@ uint32_t CPU::handleInterrupts() {
             ei_hold = false;
             mmu->write8(IF_ADDRESS, iFlag & ~TIMER_BIT);
 
-            interruptCycles = 20;
             RST(TIMER_INT);
         }
     }
@@ -2732,7 +2726,6 @@ uint32_t CPU::handleInterrupts() {
             ei_hold = false;
             mmu->write8(IF_ADDRESS, iFlag & ~SERIAL_BIT);
 
-            interruptCycles = 20;
             RST(SERIAL_INT);
         }
     }
@@ -2744,10 +2737,8 @@ uint32_t CPU::handleInterrupts() {
             ei_hold = false;
             mmu->write8(IF_ADDRESS, iFlag & ~JOYPAD_BIT);
 
-            interruptCycles = 20;
             RST(JOYPAD_INT);
         }
     }
 
-    return interruptCycles;
 }
