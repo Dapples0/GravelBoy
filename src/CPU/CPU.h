@@ -87,6 +87,7 @@ class CPU {
 
         // Jump and Subroutine Instructions
         void RET(bool condition);
+        void RETUNC(); // Unconditional RET -> has different timing then conditional RET
         void CALL(bool condition);
         void RST(uint8_t vec);
         void JP(bool condition);

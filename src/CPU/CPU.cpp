@@ -18,7 +18,7 @@ void CPU::connect(MMU *mmu) {
 
 void CPU::execute() {
     // Reset cycles
-    handleInterrupts();
+    
     if (!halt) {
         uint8_t opcode = mmu->read8(pc);
         executeInstruction(opcode);
@@ -26,7 +26,7 @@ void CPU::execute() {
     } else {
         this->mmu->tick(4);
     }
-    
+    handleInterrupts();
 
 }
 
@@ -83,7 +83,6 @@ void CPU::executeInstruction(uint8_t opcode) {
             if (!CGBMode) {
                 return;
             }
-            std::cout << "STOP executed \n";
             uint8_t key1 = mmu->read8(0xFF4D);
             // If armed switch to other mode
             if ((key1 & 0x01) == 0x01) {
@@ -1014,7 +1013,8 @@ void CPU::executeInstruction(uint8_t opcode) {
             break;
 
         case 0xC9: // RET
-            RET(true);
+            // RET(true);
+            RETUNC();
 
             // Unconditonal RET has cycles be 16
             // cyclesPassed = 16;
@@ -1033,7 +1033,8 @@ void CPU::executeInstruction(uint8_t opcode) {
             ime = true;
             ei_hold = false;
 
-            RET(true);
+            // RET(true);
+            RETUNC();
 
 
             // Unconditonal RETI has cycles be 16
@@ -1194,10 +1195,6 @@ void CPU::executeInstruction(uint8_t opcode) {
         case 0x76: // HALT
             halt = true;
 
-
-            // Halt Bug
-            if (!ime && ((mmu->read8(IE_ADDRESS) & mmu->read8(IF_ADDRESS)) != 0)) {
-            }
             break;
 
         case 0xF3: // DI
@@ -2332,9 +2329,10 @@ void CPU::setAF(uint16_t val) {
 
 
 void CPU::RET(bool condition) {
+    mmu->tick(4);
     if (condition) {
         uint8_t low = mmu->read8(sp++);
-        uint8_t high = mmu->read8(sp++);
+        uint8_t high = mmu->read8(sp++);    
         pc = (high << 8) | low;
         
         // With condition cycles passed is 20
@@ -2344,10 +2342,18 @@ void CPU::RET(bool condition) {
     }
 }
 
+void CPU::RETUNC() {
+    uint8_t low = mmu->read8(sp++);
+    uint8_t high = mmu->read8(sp++);    
+    pc = (high << 8) | low;
+    mmu->tick(4);
+}
+
 void CPU::CALL(bool condition) {
     uint16_t address = mmu->read16(pc);
     pc += 2;
     if (condition) {
+        mmu->tick(4);
         sp -= 2;
         mmu->write16(sp, pc);
 
@@ -2357,18 +2363,21 @@ void CPU::CALL(bool condition) {
         // With condition cycles passed is 12
         // cyclesPassed = 24;
     }
+    
 }
 
 void CPU::RST(uint8_t vec) {
     sp -= 2;
+    mmu->tick(4);
     mmu->write16(sp, pc);
     pc = vec;
 }
 
 void CPU::JP(bool condition) {
+    uint16_t addr = mmu->read16(pc);
     if (condition) {
-        pc = mmu->read16(pc);
-
+        mmu->tick(4);
+        pc = addr;
         // With condition cycles passed is 16
         // cyclesPassed = 16;
     } else {
@@ -2377,8 +2386,10 @@ void CPU::JP(bool condition) {
 }
 
 void CPU::JR(bool condition) {
+    int8_t addr = (int8_t)mmu->read8(pc);
     if (condition) {
-        pc += (int8_t)mmu->read8(pc);
+        mmu->tick(4);
+        pc += addr;
 
         // With condition cycles passed is 12
         // cyclesPassed = 12;
@@ -2683,62 +2694,54 @@ void CPU::handleInterrupts() {
         ei_hold = false;
         return;
     }
-    uint8_t iFlag = mmu->read8(IF_ADDRESS);
-    uint8_t ie = mmu->read8(IE_ADDRESS);
-    // vBlank
-    if ((iFlag & VBLANK_BIT) != 0 && (ie & VBLANK_BIT) != 0) {
-        halt = false;
-        if (ime) {
-            ime = false;
-            ei_hold = false;
-            mmu->write8(IF_ADDRESS, iFlag & ~VBLANK_BIT);
 
-            RST(VBLANK_INT);
-        }
-    } 
-    // LCD
-    else if ((iFlag & LCD_BIT) != 0 && (ie & LCD_BIT) != 0) {
-        halt = false;
-        if (ime) {
-            ime = false;
-            ei_hold = false;
-            mmu->write8(IF_ADDRESS, iFlag & ~LCD_BIT);
+    uint8_t iFlag = mmu->getIF();
+    uint8_t ie = mmu->getIE();
+    uint8_t pending = iFlag & ie;
+    if (pending == 0) return;
 
-            RST(STAT_INT);
-        }
-    } 
-    // Timer
-    else if ((iFlag & TIMER_BIT) != 0 && (ie & TIMER_BIT) != 0) {
-        halt = false;
-        if (ime) {
-            ime = false;
-            ei_hold = false;
-            mmu->write8(IF_ADDRESS, iFlag & ~TIMER_BIT);
+    halt = false;
 
-            RST(TIMER_INT);
-        }
+    if (!ime) return;
+
+    ime = false;
+    ei_hold = false;
+
+    uint16_t address = 0x0000;
+
+    if (pending & VBLANK_BIT) {
+        mmu->setIF(iFlag & ~VBLANK_BIT); 
+        address = VBLANK_INT;
     }
-    // Serial
-    else if ((iFlag & SERIAL_BIT) != 0 && (ie & SERIAL_BIT) != 0) {
-        halt = false;
-        if (ime) {
-            ime = false;
-            ei_hold = false;
-            mmu->write8(IF_ADDRESS, iFlag & ~SERIAL_BIT);
-
-            RST(SERIAL_INT);
-        }
+    else if (pending & LCD_BIT) { 
+        mmu->setIF(iFlag & ~LCD_BIT); 
+        address = STAT_INT;
     }
-    // Joypad
-    else if ((iFlag & JOYPAD_BIT) != 0 && (ie & JOYPAD_BIT) != 0) {
-        halt = false;
-        if (ime) {
-            ime = false;
-            ei_hold = false;
-            mmu->write8(IF_ADDRESS, iFlag & ~JOYPAD_BIT);
-
-            RST(JOYPAD_INT);
-        }
+    else if (pending & TIMER_BIT) { 
+        mmu->setIF(iFlag & ~TIMER_BIT); 
+        address = TIMER_INT; 
     }
+    else if (pending & SERIAL_BIT) { 
+        mmu->setIF(iFlag & ~SERIAL_BIT); 
+        address = SERIAL_INT; 
+    }
+    else if (pending & JOYPAD_BIT) { 
+        mmu->setIF(iFlag & ~JOYPAD_BIT); 
+        address = JOYPAD_INT; 
+    }
+
+    // Service two wait states
+    mmu->tick(4);
+    mmu->tick(4);
+
+    // Push PC onto stack
+    sp -= 2;
+    mmu->write16(sp, pc);
+
+    // Set address to handler
+    pc = address;
+    mmu->tick(4);
+
 
 }
+
