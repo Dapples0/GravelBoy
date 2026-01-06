@@ -1,6 +1,7 @@
 #include "gb.h"
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 
 gb::gb() : cpu(), apu(), gpu(), joypad(), mmu(), timer(), interrupt() {
     // cpu = CPU();
@@ -29,14 +30,25 @@ void gb::run(const char *filename) {
     uint32_t i = 0;
     while (1) {
         // if (i <= 325820) {
-            file << cpu.debug();
+            // file << cpu.debug();
         // }
         
-        uint32_t cyclesPassed = cpu.execute();
+        cpu.execute();
         if (cpu.getDoubleSpeed()) {
-        } 
-        timer.tick(cyclesPassed);
-        
+        }
+
+        if (cpu.cb) {
+            if ((int)cpu.cyclesPassed + cpu.interruptCycles != mmu.cycles) {
+                std::cout << std::hex << std::uppercase << std::setfill('0') << std::setw(2) << "CB" << (int)cpu.op << " | " << std::dec << mmu.cycles << "-" <<  (int)cpu.cyclesPassed << " \n";
+                
+            }
+        } else {
+            if ((int)cpu.cyclesPassed + cpu.interruptCycles != mmu.cycles) {
+                std::cout << std::hex << std::uppercase << std::setfill('0') << std::setw(2) <<  (int)cpu.op << " | " << std::dec << mmu.cycles << "-" <<  (int)cpu.cyclesPassed << " \n";
+            }
+        }
+        // std::cout << std::dec << "Cycles Used: " << (int)mmu.cycles << "\n";
+        mmu.cycles = 0;
         i++;
     }
 

@@ -19,7 +19,7 @@ void Timer::write(uint16_t address, uint8_t data) {
     if (address == DIV_ADDRESS) {
         bool preTimerCheck = timerControlCheck();
 
-        DIV = 0x0000;
+        DIV &= 0x00FF;
 
 
         bool postTimerCheck = timerControlCheck();
@@ -65,7 +65,7 @@ uint8_t Timer::read(uint16_t address) {
         return TMA;
     }
     if (address == TAC_ADDRESS) {
-        return TAC;
+        return TAC & 0x07;
     } 
 
 
@@ -77,26 +77,24 @@ uint8_t Timer::read(uint16_t address) {
 void Timer::tick(uint32_t cyclesPassed) {
     // Loop through each individual cycle passed per cpu operation
     for (uint32_t i = 0; i < cyclesPassed; ++i) {
+        bool preTimerCheck = timerControlCheck();
+        
+
+        DIV++;
+        
+        // DIV = (cycles >> 8);
+
+        bool postTimerCheck = timerControlCheck();
+
+        if (preTimerCheck && !postTimerCheck && TIMADelay == 0) {
+            incrementTIMA();
+        }
+
         if (TIMADelay > 0) {
             TIMADelay--;
             if (TIMADelay == 0) {
                 TIMA = TMA;
                 interrupt->setIF(interrupt->getIF() | 0x04);
-            }
-        }
-        bool preTimerCheck = timerControlCheck();
-        
-
-        DIV++;
-
-        bool postTimerCheck = timerControlCheck();
-
-        if (preTimerCheck && !postTimerCheck) {
-            if (TIMA == 0xFF) {
-                TIMA = 0;
-                TIMADelay = 4;
-            } else {
-                TIMA++;
             }
         }
     }
