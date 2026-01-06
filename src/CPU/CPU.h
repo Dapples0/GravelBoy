@@ -99,7 +99,6 @@ class CPU {
     
         void handleInterrupts();
 
-        void tick();
     
         // Set Flag Registers
         void setZ(bool set);

@@ -37,6 +37,7 @@ void gb::run(const char *filename) {
         if (cpu.getDoubleSpeed()) {
         }
 
+        // Debugging -> checks if cycles match expected cycles TODO: Remove
         if (cpu.cb) {
             if ((int)cpu.cyclesPassed + cpu.interruptCycles != mmu.cycles) {
                 std::cout << std::hex << std::uppercase << std::setfill('0') << std::setw(2) << "CB" << (int)cpu.op << " | " << std::dec << mmu.cycles << "-" <<  (int)cpu.cyclesPassed << " \n";

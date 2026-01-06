@@ -208,7 +208,7 @@ uint8_t MMU::read8(uint16_t address)
     else if (address == 0xFFFF) {
         res = this->interrupt->getIE();
     }
-    tick(4);
+    tick();
     return res;
 }
 
@@ -301,7 +301,7 @@ void MMU::write8(uint16_t address, uint8_t data) {
     else if (address == 0xFFFF) {
         this->interrupt->setIE(data);
     }
-    tick(4);
+    tick();
 }
 
 void MMU::write16(uint16_t address, uint16_t data)
@@ -377,11 +377,11 @@ void MMU::setIE(uint8_t data)
 }
 
 
-void MMU::tick(uint8_t val) {
+void MMU::tick() {
     // for (int i = 0; i < val; ++i) {
     //     timer->tick(1);
     // }
-    timer->tick(4);
+    timer->tick();
     cycles += 4;
 }
 

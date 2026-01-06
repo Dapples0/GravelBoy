@@ -33,7 +33,7 @@ class MMU {
         void setIF(uint8_t val);
         void setIE(uint8_t val);
 
-        void tick(uint8_t val);
+        void tick();
         int cycles = 0;
         // Debugging read
         uint8_t readPeek(uint16_t address);

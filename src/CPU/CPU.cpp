@@ -24,7 +24,7 @@ void CPU::execute() {
         executeInstruction(opcode);
         // std::cout << std::hex << std::uppercase << std::setfill('0') << std::setw(2) <<  (int)opcode << " | ";
     } else {
-        this->mmu->tick(4);
+        this->mmu->tick();
     }
     handleInterrupts();
 
@@ -1111,7 +1111,7 @@ void CPU::executeInstruction(uint8_t opcode) {
 
         case 0x33: // INC SP
             sp++;
-            mmu->tick(4);
+            mmu->tick();
             break;
         
         case 0x39: // ADD HL, SP
@@ -1121,7 +1121,7 @@ void CPU::executeInstruction(uint8_t opcode) {
 
         case 0x3B: // DEC SP
             sp--;
-            mmu->tick(4);
+            mmu->tick();
             break;
 
         case 0xC1: // POP BC
@@ -1131,7 +1131,7 @@ void CPU::executeInstruction(uint8_t opcode) {
 
         case 0xC5: // PUSH BC
             sp -= 2;
-            mmu->tick(4);
+            mmu->tick();
             mmu->write16(sp, getBC());
             break;
 
@@ -1143,7 +1143,7 @@ void CPU::executeInstruction(uint8_t opcode) {
 
         case 0xD5: // PUSH DE
             sp -= 2;
-            mmu->tick(4);
+            mmu->tick();
             mmu->write16(sp, getDE());
             break;
 
@@ -1154,7 +1154,7 @@ void CPU::executeInstruction(uint8_t opcode) {
 
         case 0xE5: // PUSH HL
             sp -= 2;
-            mmu->tick(4);
+            mmu->tick();
             mmu->write16(sp, getHL());
             break;
         
@@ -1169,10 +1169,10 @@ void CPU::executeInstruction(uint8_t opcode) {
             setC(((sp & 0xFF) + val) > 0xFF);
 
             //TODO might not be in correct place
-            mmu->tick(4);
+            mmu->tick();
             sp += (int8_t)val;
 
-            mmu->tick(4);
+            mmu->tick();
             pc++;
         }
             break;
@@ -1183,7 +1183,7 @@ void CPU::executeInstruction(uint8_t opcode) {
 
         case 0xF5: // PUSH AF
             sp -= 2;
-            mmu->tick(4);
+            mmu->tick();
             mmu->write16(sp, getAF());
             break;
 
@@ -1198,13 +1198,13 @@ void CPU::executeInstruction(uint8_t opcode) {
 
             setHL(sp + (int8_t)val);
             pc++;
-            mmu->tick(4);
+            mmu->tick();
         }
             break;
 
         case 0xF9: // LD SP, HL
             sp = getHL();
-            mmu->tick(4);
+            mmu->tick();
             break;
 
         
@@ -2350,12 +2350,12 @@ void CPU::setAF(uint16_t val) {
 
 
 void CPU::RET(bool condition) {
-    mmu->tick(4);
+    mmu->tick();
     if (condition) {
         uint8_t low = mmu->read8(sp++);
         uint8_t high = mmu->read8(sp++);    
         pc = (high << 8) | low;
-        mmu->tick(4);
+        mmu->tick();
         // With condition cycles passed is 20
         cyclesPassed = 20;
         // pc = mmu->read8(sp++);
@@ -2367,14 +2367,14 @@ void CPU::RETUNC() {
     uint8_t low = mmu->read8(sp++);
     uint8_t high = mmu->read8(sp++);    
     pc = (high << 8) | low;
-    mmu->tick(4);
+    mmu->tick();
 }
 
 void CPU::CALL(bool condition) {
     uint16_t address = mmu->read16(pc);
     pc += 2;
     if (condition) {
-        mmu->tick(4);
+        mmu->tick();
         sp -= 2;
         mmu->write16(sp, pc);
 
@@ -2389,7 +2389,7 @@ void CPU::CALL(bool condition) {
 
 void CPU::RST(uint8_t vec) {
     sp -= 2;
-    mmu->tick(4);
+    mmu->tick();
     mmu->write16(sp, pc);
     pc = vec;
 }
@@ -2397,7 +2397,7 @@ void CPU::RST(uint8_t vec) {
 void CPU::JP(bool condition) {
     uint16_t addr = mmu->read16(pc);
     if (condition) {
-        mmu->tick(4);
+        mmu->tick();
         pc = addr;
         // With condition cycles passed is 16
         cyclesPassed = 16;
@@ -2410,7 +2410,7 @@ void CPU::JR(bool condition) {
     int8_t addr = (int8_t)mmu->read8(pc);
     if (condition) {
         pc += addr;
-        mmu->tick(4);
+        mmu->tick();
         // With condition cycles passed is 12
         cyclesPassed = 12;
     }    
@@ -2430,7 +2430,7 @@ uint8_t CPU::INC8(uint8_t val) {
 }
 
 uint16_t CPU::INC16(uint16_t val) {
-    mmu->tick(4);
+    mmu->tick();
     return val + 1;
 }
 
@@ -2445,7 +2445,7 @@ uint8_t CPU::DEC8(uint8_t val) {
 }
 
 uint16_t CPU::DEC16(uint16_t val) {
-    mmu->tick(4);
+    mmu->tick();
     return val - 1;
 }
 
@@ -2466,7 +2466,7 @@ void CPU::ADD16(uint16_t val) {
     setH(((getHL() & 0x0FFF) + (val & 0x0FFF)) > 0x0FFF);
     // Set H and L registers
     setHL(res);
-    mmu->tick(4);
+    mmu->tick();
 }
 
 void CPU::ADC(uint8_t val) {
@@ -2735,8 +2735,8 @@ void CPU::handleInterrupts() {
 
 
     // Service two wait states
-    mmu->tick(4);
-    mmu->tick(4);
+    mmu->tick();
+    mmu->tick();
 
     // Push PC onto stack
     sp -= 2;
@@ -2765,7 +2765,7 @@ void CPU::handleInterrupts() {
     }
     // Set address to handler
     pc = address;
-    mmu->tick(4);
+    mmu->tick();
     interruptCycles = 20;
 
 }
