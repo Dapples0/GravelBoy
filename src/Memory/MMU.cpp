@@ -361,11 +361,6 @@ void MMU::setIF(uint8_t data)
     this->interrupt->setIF(data);
 }
 
-void MMU::setIE(uint8_t data)
-{
-    this->interrupt->setIE(data);
-}
-
 uint8_t MMU::readPeek(uint16_t address)
 {
 
@@ -467,4 +462,25 @@ uint8_t MMU::readPeek(uint16_t address)
         res = this->interrupt->getIE();
     }
     return res;
+}
+
+void MMU::OAMDMATransfer() {
+    if (!gpu->checkOAMTransfer()) {
+        return;
+    }
+
+    // After DMA is written to, wait 1 m-cycles
+    if (gpu->checkOAMDelay()) {
+        gpu->setOAMDelay(false);
+        return;
+    }
+    uint8_t bytes = gpu->getOAMDMABytes();
+    uint8_t index = OAM_BANK_SIZE - bytes;
+    uint16_t src = (gpu->getOAMDMA() << 8) | index;
+    uint16_t dest = 0xFE00 | index;
+
+    this->write8(dest, this->read8(src));
+    bytes--;
+    gpu->setOAMDMABytes(bytes);
+    if (bytes == 0) gpu->setOAMTransfer(false);
 }

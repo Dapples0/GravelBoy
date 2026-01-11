@@ -16,6 +16,7 @@ gb::gb() : cpu(), apu(), gpu(), joypad(), mmu(), timer(), interrupt() {
     cpu.connect(&mmu, &timer, &gpu);
     mmu.connect(&gpu, &joypad, &timer, &apu, &interrupt);
     timer.connect(&interrupt);
+    gpu.connect(&interrupt);
     
 }
 
@@ -40,17 +41,20 @@ void gb::run(const char *filename) {
     std::ofstream file("logs/cpu_debug.txt");
     uint32_t i = 0;
 
-
+    uint32_t cycles_until_poll = 0;
     bool running = true;
     while (running) {
         // if (i <= 325820) {
             // file << cpu.debug();
         // }
-		if (SDL_PollEvent(&event)) {
-			if (event.type == SDL_QUIT) {
-				running = false;
-			}
-		}
+
+        // TODO remove later -> here to make tests run faster
+        if (++cycles_until_poll > 10000) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) running = false;
+        }
+        cycles_until_poll = 0;
+    }
         
         if (gpu.getPPUMode() != V_BLANK) cpu.execute();
             

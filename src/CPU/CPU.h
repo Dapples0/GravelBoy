@@ -89,8 +89,9 @@ class CPU {
         bool ei_hold = false;
 
 
-        int CGBMode;
+        bool CGBMode;
         bool doubleSpeed;
+        int32_t stop_delay = -1;
 
         void resetGB();
         void resetCGB();

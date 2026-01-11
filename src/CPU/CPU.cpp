@@ -19,9 +19,15 @@ void CPU::connect(MMU *mmu, Timer *timer, GPU *gpu) {
 }
 
 void CPU::execute() {
-    // Reset cycles
-    
-    if (!halt) {
+    if (stop_delay > 0) {
+        stop_delay--;
+        cyclesPassed = 4;
+        cycles = 4;
+        return;
+    }
+
+    // Hacky way of handling OAM transfer, should instead execute 0xFF opcode instead
+    if (!halt || !gpu->checkOAMTransfer()) {
         uint8_t opcode = this->read8(pc);
         executeInstruction(opcode);
         // std::cout << std::hex << std::uppercase << std::setfill('0') << std::setw(2) <<  (int)opcode << " | ";
@@ -91,16 +97,16 @@ void CPU::executeInstruction(uint8_t opcode) {
             if (!CGBMode) {
                 return;
             }
-            uint8_t key1 = this->read8(0xFF4D);
-            cyclesPassed += 4;
+            // Call mmu read and write here as reading and writing to key1 shouldn't take t-cycles
+            uint8_t key1 = mmu->read8(0xFF4D);
             // If armed switch to other mode
             if ((key1 & 0x01) == 0x01) {
-                
+                //  2050 m-cycle wait after 
+                stop_delay = 2050;
                 doubleSpeed = !doubleSpeed;
 
                 // Clear bit0 and set speed
-                ((key1 & 0x80) == 0x80) ? this->write8(0xFF4D, 0x00) : this->write8(0xFF4D, 0x80);
-                cyclesPassed += 4;
+                ((key1 & 0x80) == 0x80) ? mmu->write8(0xFF4D, 0x00) : mmu->write8(0xFF4D, 0x80);
             }
 
             pc++;            
@@ -2213,11 +2219,16 @@ void CPU::executeCBInstruction(uint8_t opcode) {
 
 void CPU::tick() {
     timer->tick();
+    mmu->OAMDMATransfer();
+    // gpu + apu tick here
+    gpu->tick(doubleSpeed ? 2 : 4);
+    
     cycles += 4;
 }
 
 uint8_t CPU::read8(uint16_t address)
 {
+    // oam dma transfer here TODO
     int8_t res =  mmu->read8(address);
     this->tick();
     return res;
@@ -2231,6 +2242,7 @@ uint16_t CPU::read16(uint16_t address)
 }
 
 void CPU::write8(uint16_t address, uint8_t data) {
+    // oam dma transfer here TODO
     mmu->write8(address, data);
     this->tick();
 }

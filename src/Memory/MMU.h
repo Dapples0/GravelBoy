@@ -30,10 +30,11 @@ class MMU {
         uint8_t getIF();
         uint8_t getIE();
         void setIF(uint8_t val);
-        void setIE(uint8_t val);
         
         // Debugging read
         uint8_t readPeek(uint16_t address);
+
+        void OAMDMATransfer();
     private:
         std::unique_ptr<Cartridge> rom; // ROM Banks + External RAM
         GPU *gpu; // VRAM + OAM
