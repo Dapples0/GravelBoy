@@ -35,6 +35,8 @@ class MMU {
         uint8_t readPeek(uint16_t address);
 
         void OAMDMATransfer();
+
+        uint8_t getLastOAMByte();
     private:
         std::unique_ptr<Cartridge> rom; // ROM Banks + External RAM
         GPU *gpu; // VRAM + OAM
@@ -47,12 +49,10 @@ class MMU {
         std::vector<std::vector<uint8_t>> wram;
         uint8_t wramBank = 1;
 
-        // I/O Registers
-        std::array<uint8_t, 0x80> io;
         uint8_t serialByte;
 
         // High Ram
-        std::array<uint8_t, 0x7F> hram;
+        std::array<uint8_t, 0x7F> hram = {};
 
         // CGB Flag -> also present in CPU
         bool cgb;
@@ -63,6 +63,8 @@ class MMU {
         void setMBC(int type, std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int romSize, int sRamSize);
         uint8_t readWRAM(uint16_t address);
         void writeWRAM(uint16_t address, uint8_t data);
+
+        uint8_t lastOAMByte;
 };
 
 

@@ -6,6 +6,7 @@
 #include <memory>
 #include <vector>
 #include <iostream>
+#include <cstring>
 #include <SDL2/SDL.h>
 
 #include "../constants.h"
@@ -50,7 +51,7 @@ class GPU {
 
         void setOAMTransfer(bool val);
 
-        bool checkOAMDelay();
+        uint8_t checkOAMDelay();
 
         void setOAMDelay(bool val);
 
@@ -64,12 +65,14 @@ class GPU {
     private:
         Interrupts *interrupt;
 
-        std::vector<std::array<uint8_t, VRAM_BANK_SIZE>> vram;
+        std::vector<std::array<uint8_t, VRAM_BANK_SIZE>> vram = {};
         uint8_t vramBank = 0;
 
-        std::array<uint8_t, OAM_BANK_SIZE> oam; // Displays up to 40 movable objects, so each object takes 4 indices in the array
-        std::array<std::array<uint8_t, 4>, 10> oamBuffer; // Stores up to 10 objects in buffer, cleared once drawn
+        std::array<uint8_t, OAM_BANK_SIZE> oam = {}; // Displays up to 40 movable objects, so each object takes 4 indices in the array
+        std::array<std::array<uint8_t, 4>, 10> oamBuffer = {}; // Stores up to 10 objects in buffer, cleared once drawn
         uint8_t bufferNum = 0;
+
+        std::array<uint16_t, SCREEN_HEIGHT * SCREEN_WIDTH> SDL_Display = {};
 
         /**
          * 0 - Horizontal Blank
@@ -80,15 +83,18 @@ class GPU {
         int PPUmode;
         uint32_t dotCount = 0;
         bool cgb;
+        bool lcdOff = false;
 
         bool oamTransfer = false;
         uint8_t oamDMABytes;
         uint8_t oamTransferDelay;
-        bool OAMDMADelay;
+        uint8_t OAMDMADelay;
         uint8_t oamLastByte = 0x00;
 
         bool vramTransfer = false;
 
+        uint16_t windowLineCounter = 0;
+        bool drawWindow = false;
 
         bool interrupt_gate = true; // Initially set to True, basically here to ensure logical OR gate is implemented properly
         /**
@@ -117,9 +123,9 @@ class GPU {
 
         // LCD Colour Palettes
         uint8_t BCPS = 0x00; // Background Colour Palette Specification (index)
-        std::array<uint8_t, PALETTE_SIZE> bgPalette; // (BCPD) Background Colour Palette Data
+        std::array<uint8_t, PALETTE_SIZE> bgPalette = {}; // (BCPD) Background Colour Palette Data
         uint8_t OCPS = 0x00; // OBJ Colour Palette Specification
-        std::array<uint8_t, PALETTE_SIZE> objPalette; // (OCPD) OBJ Colour Palette data
+        std::array<uint8_t, PALETTE_SIZE> objPalette = {}; // (OCPD) OBJ Colour Palette data
 
         // VRAM DMA Transfer Registers
         uint16_t VRAMDMAsrc = 0x0000;
@@ -130,6 +136,7 @@ class GPU {
         // SDL
         SDL_Window* window = nullptr;
         SDL_Renderer* renderer = nullptr;
+        SDL_Texture* texture = nullptr;
 
         // PPU Mode functions
         void OAMScan();
@@ -137,6 +144,16 @@ class GPU {
         void HBlank();
         void VBlank();
 
+        void renderScanline();
+
+        uint8_t readVRAMBank(uint16_t address, uint8_t bank);
+
+        uint16_t getDMGColour(uint8_t id, uint8_t palette);
+        uint16_t readBGPalette(uint8_t num, uint8_t id);
+        uint16_t readObjPalette(uint8_t num, uint8_t id);
+
+        void clear();
+        void update();
 
 };
 

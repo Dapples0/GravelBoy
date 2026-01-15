@@ -74,10 +74,10 @@ bool MMU::loadRom(const char *filename) {
 
     // Determines MBC Type
     setMBC(type, romData, romSize, sRamSize);
-    bool cgbMode = cgb == 0xC0 || cgb == 0x80;
+    // bool cgbMode = cgb == 0xC0 || cgb == 0x80;
+    bool cgbMode = false;
     this->cgb = cgbMode;
     this->gpu->setCGBMode(cgbMode);
-    // this->cgb = false;
     this->wram = this->cgb 
     ? std::vector<std::vector<uint8_t>>(8, std::vector<uint8_t>(WRAM_BANK_SIZE)) 
     : std::vector<std::vector<uint8_t>>(2, std::vector<uint8_t>(WRAM_BANK_SIZE));
@@ -468,10 +468,10 @@ void MMU::OAMDMATransfer() {
     if (!gpu->checkOAMTransfer()) {
         return;
     }
-
-    // After DMA is written to, wait 1 m-cycles
-    if (gpu->checkOAMDelay()) {
-        gpu->setOAMDelay(false);
+    uint8_t oamDelay = gpu->checkOAMDelay();
+    // After DMA is written to, wait 1 m-cycles (delay is initially set to 2 to account for writing to register during the same tick)
+    if (oamDelay > 0) {
+        gpu->setOAMDelay(oamDelay--);
         return;
     }
     uint8_t bytes = gpu->getOAMDMABytes();
@@ -479,8 +479,14 @@ void MMU::OAMDMATransfer() {
     uint16_t src = (gpu->getOAMDMA() << 8) | index;
     uint16_t dest = 0xFE00 | index;
 
-    this->write8(dest, this->read8(src));
+    uint8_t data = this->read8(src);
+    lastOAMByte = data;
+    this->write8(dest, data);
     bytes--;
     gpu->setOAMDMABytes(bytes);
     if (bytes == 0) gpu->setOAMTransfer(false);
+}
+
+uint8_t MMU::getLastOAMByte() {
+    return lastOAMByte;
 }

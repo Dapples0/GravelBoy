@@ -26,8 +26,7 @@ void CPU::execute() {
         return;
     }
 
-    // Hacky way of handling OAM transfer, should instead execute 0xFF opcode instead
-    if (!halt || !gpu->checkOAMTransfer()) {
+    if (!halt) {
         uint8_t opcode = this->read8(pc);
         executeInstruction(opcode);
         // std::cout << std::hex << std::uppercase << std::setfill('0') << std::setw(2) <<  (int)opcode << " | ";
@@ -2226,10 +2225,12 @@ void CPU::tick() {
     cycles += 4;
 }
 
-uint8_t CPU::read8(uint16_t address)
-{
-    // oam dma transfer here TODO
-    int8_t res =  mmu->read8(address);
+uint8_t CPU::read8(uint16_t address) {
+    if ((gpu->checkOAMTransfer() && gpu->checkOAMDelay() == 0) && address <= 0xFE9F) {
+        this->tick();
+        return 0xFF;
+    }
+    int8_t res = mmu->read8(address);
     this->tick();
     return res;
 }
@@ -2242,7 +2243,10 @@ uint16_t CPU::read16(uint16_t address)
 }
 
 void CPU::write8(uint16_t address, uint8_t data) {
-    // oam dma transfer here TODO
+    if ((gpu->checkOAMTransfer() && gpu->checkOAMDelay() == 0) && address <= 0xFE9F) {
+        this->tick();
+        return;
+    }
     mmu->write8(address, data);
     this->tick();
 }

@@ -38,7 +38,7 @@ void gb::run(const char *filename) {
     gpu.attatchSDL();
     SDL_Event event;
 
-    std::ofstream file("logs/cpu_debug.txt");
+    // std::ofstream file("logs/cpu_debug.txt");
     uint32_t i = 0;
 
     uint32_t cycles_until_poll = 0;
@@ -56,8 +56,8 @@ void gb::run(const char *filename) {
         cycles_until_poll = 0;
     }
         
-        if (gpu.getPPUMode() != V_BLANK) cpu.execute();
-            
+        // if (gpu.getPPUMode() != V_BLANK) 
+        cpu.execute();
         
   
 
@@ -76,7 +76,7 @@ void gb::run(const char *filename) {
         i++;
     }
 
-    file.close();
+    // file.close();
 
 }
 
