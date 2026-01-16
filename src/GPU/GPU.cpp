@@ -1,4 +1,5 @@
 #include "GPU.h"
+#include <bitset>
 
 
 GPU::GPU() {
@@ -153,7 +154,7 @@ uint8_t GPU::readVRAMBank(uint16_t address, uint8_t bank) {
         std::cerr << "Reading from second VRAM bank on DMG mode\n";
     }
     uint16_t relative_address = address & 0x1FFF;
-    return cgb ? vram[vramBank][relative_address] : vram[0][relative_address];
+    return vram[bank][relative_address];
 }
 
 
@@ -184,6 +185,11 @@ void GPU::writeOAM(uint16_t address, uint8_t data) {
     if (PPUmode == OAM_SCAN || PPUmode == DRAWING_PIXELS) {
         return;
     }
+    uint16_t relative_address = address & 0xFF;
+    oam[relative_address] = data;
+}
+
+void GPU::writeOAMTransfer(uint16_t address, uint8_t data) {
     uint16_t relative_address = address & 0xFF;
     oam[relative_address] = data;
 }
@@ -295,17 +301,22 @@ void GPU::writeHDMA(uint16_t address, uint8_t data) {
    switch (address) {
         case HDMA1_ADDRESS:
             VRAMDMAsrc = (VRAMDMAsrc & 0x00FF) | (data << 8);
+            break;
         case HDMA2_ADDRESS:
             VRAMDMAsrc = (VRAMDMAsrc & 0xFF00) | (data & 0xF0);
+            break;
         case HDMA3_ADDRESS:
             VRAMDMAdes = (VRAMDMAdes & 0x00FF) | ((data & 0x1F) << 8);
+            break;
         case HDMA4_ADDRESS:
             VRAMDMAdes = (VRAMDMAdes & 0xFF00) | (data & 0xF0);
+            break;
         case HDMA5_ADDRESS:
             // TODO VRAM DMA Transfer
+            break;
         default:
 
-            std::cerr << "Invalid HDMA read address\n";
+            std::cerr << "Invalid HDMA write address\n";
 
     }
 }
@@ -326,6 +337,9 @@ uint8_t GPU::readLCDColour(uint16_t address) {
             return OCPS;
         
         case OCPD_ADDRESS:
+            if (PPUmode == DRAWING_PIXELS) {
+                return 0xFF;
+            }
             return objPalette[OCPS & 0x3F];
     }
 
@@ -437,12 +451,12 @@ void GPU::OAMScan() {
 
     if (dotCount == 80) {
         PPUmode = DRAWING_PIXELS;
-        if (LY == WY) drawWindow = true;
+        if (LY >= WY) drawWindow = true;
     }
 }
 
 void GPU::DrawingPixels() {
-    // Render scanline at the end of 
+    // Render scanline at the end of mode
     if (dotCount == 252) {
         renderScanline();
         PPUmode = H_BLANK;
@@ -453,6 +467,7 @@ void GPU::DrawingPixels() {
 
 void GPU::HBlank() {
     if (dotCount == 456) {
+
         PPUmode = OAM_SCAN;
         LY++;
         dotCount = 0;
@@ -467,7 +482,6 @@ void GPU::HBlank() {
 }
 
 void GPU::VBlank() {
-
     if (dotCount == 456) {
         LY++;
         dotCount = 0;
@@ -495,9 +509,9 @@ void GPU::renderScanline() {
     bool windowDrawn = false;
     uint16_t tileX, tileY, tileNum, address, colour, tileAddress;
     uint8_t tileAttr, bank, lower, upper, flipMask, colourId;
-    std::array<uint8_t, SCREEN_HEIGHT * SCREEN_WIDTH> lineBuffer = {};
-    std::array<uint8_t, SCREEN_HEIGHT * SCREEN_WIDTH> prioBuffer = {};
-    std::array<uint8_t, 160> buffer;
+    std::array<uint8_t, SCREEN_HEIGHT * SCREEN_WIDTH> bgAttr = {};
+    std::array<uint8_t, SCREEN_HEIGHT * SCREEN_WIDTH> bgColourId = {};
+    std::array<uint8_t, SCREEN_HEIGHT * SCREEN_WIDTH> objPrio = {};
     // Draw window and background
     for (int i = 0; i < SCREEN_WIDTH; ++i) {
         if (windowEnabled && drawWindow && i >= (WX - 7)) {
@@ -508,46 +522,54 @@ void GPU::renderScanline() {
         } else {
             address = bgMapAddress;
             tileX = ((SCX + i) / 8) & 0x1F;
-            tileY = ((LY + SCY) & 0xFF) / 8;          
+            tileY = (((LY + SCY) & 0xFF) / 8) & 0x1F;          
         }
 
         tileNum = readVRAMBank((tileY * 32 + tileX + address), 0);
-        tileAddress = ((LCDC & 0x10) == 0x10 ? 0x8000  + (16 * tileNum): 0x9000 + (16 * (int8_t)tileNum ));
+        tileAddress = (LCDC & 0x10) == 0x10 ? 0x8000  + (16 * tileNum): 0x9000 + (16 * (int8_t)tileNum);
         tileAttr = cgb ? readVRAMBank(tileY * 32 + tileX + address, 1) : 0;
-
         // Y flip
-        if (cgb && (tileAttr & 0x40) == 0x40) 
-            tileAddress += windowDrawn ? (14 - 2 * (windowLineCounter % 8)) : (14 - 2 * ((LY + SCY) % 8));
-        else 
+        if ((cgb && (tileAttr & 0x40) == 0x40)) {
+            tileAddress += windowDrawn ? (14 - 2 * (windowLineCounter % 8)) :  (14 - 2 * ((LY + SCY) % 8));
+        } 
+        else {
             tileAddress += windowDrawn ? (2 * (windowLineCounter % 8)) : (2 * ((LY + SCY) % 8));
+        }
+            
 
-        bank = (cgb) ? (tileAttr >> 3) & 0x01 : 0;
+        bank = (cgb) ? (tileAttr >> 3) & 0x01 : 0;        
         lower = readVRAMBank(tileAddress, bank);
         upper = readVRAMBank(tileAddress + 1, bank);
 
         // X flip
         flipMask = windowDrawn ? (i - (WX - 7)) % 8 : (SCX + i) % 8;
-
-        if (!cgb || (tileAttr & 0x20) != 0x20) flipMask = 7 - flipMask;
+        
+        // Tile attribute is always a unset in dmg mode
+        if ((tileAttr & 0x20) != 0x20) flipMask = 7 - flipMask;
 
         flipMask = 1 << flipMask;
 
         colourId = ((upper & flipMask) ? 2 : 0 ) | ((lower & flipMask) ? 1 : 0);
 
+
         // Get colour
         if (cgb) {
             colour = readBGPalette(tileAttr & 0x07, colourId);
         } else {
-            colour = getDMGColour(colourId, BGP);
+            // if background enable not set, use colour 0 of BGP
+            colour = enableOrPrio ? getDMGColour(colourId, BGP) : 0x7FFF;
         }
         SDL_Display[i + LY * SCREEN_WIDTH] = colour;
 
         // For BG priority in CGB mode
-        if (cgb && (tileAttr & 0x80) == 0x80) {
-            lineBuffer[i + LY * SCREEN_WIDTH] = colourId * 0xF;
+        if (cgb) {
+            bgAttr[i + LY * SCREEN_WIDTH] = tileAttr;
+            bgColourId[i + LY * SCREEN_WIDTH] = colourId;
         } else {
-            lineBuffer[i + LY * SCREEN_WIDTH] = colourId;
+            // Store colour id for object to background priority as only colour ids 1-3 can be drawn over an object
+            bgColourId[i + LY * SCREEN_WIDTH] = colourId;
         }
+
 
     }
 
@@ -556,7 +578,7 @@ void GPU::renderScanline() {
         for (int i = 0; i < SCREEN_WIDTH; ++i) {
             uint8_t objSize = ((LCDC & 0x04) == 0x04) ? 16 : 8;
 
-            // Drawing priority, DMG: smaller x has a higher priorit
+            // Drawing priority, DMG: smaller x has a higher priority
             uint8_t dmgXPriority = 0xFF;
 
             // Loop through all oam buffer objects
@@ -564,14 +586,15 @@ void GPU::renderScanline() {
                 uint8_t posY = oamBuffer[j][0];
                 uint8_t posX = oamBuffer[j][1];
                 uint8_t objTileNum = oamBuffer[j][2];
-                uint8_t objFlags = oamBuffer[j][3];
+                uint8_t objAttr = oamBuffer[j][3];
 
                 // Skip if current pixel does not contain the object
                 if (posX > (i + 8) || (posX + 8) <= i + 8) continue;
 
                 tileAddress = 0x8000;
+
                 // Y flip
-                if ((objFlags & 0x40) == 0x40) {
+                if ((objAttr & 0x40) == 0x40) {
                     tileAddress +=  (objSize == 8) ? 
                                     (objTileNum * 16 + 2 * (7 - (LY - posY + 16))) : 
                                     (objTileNum & 0xFFFE) * 16 + 2 * (15 - (LY - posY + 16));
@@ -582,50 +605,54 @@ void GPU::renderScanline() {
                                     (objTileNum & 0xFFFE) * 16 + 2 * ((LY - posY + 16));
                 }
 
-                bank = (cgb) ? (objFlags >> 3) & 0x01 : 0;
+                bank = (cgb) ? (objAttr >> 3) & 0x01 : 0;
 
                 lower = readVRAMBank(tileAddress, bank);
                 upper = readVRAMBank(tileAddress + 1, bank);
 
                 // X Flip
-                flipMask = (objFlags & 0x20) == 0x20 ? (i - posX + 8) : (7 - (i - posX + 8));
+                flipMask = (objAttr & 0x20) == 0x20 ? (i - posX + 8) : (7 - (i - posX + 8));
                 flipMask = 1 << flipMask;
 
                 colourId = ((upper & flipMask) ? 2 : 0 ) | ((lower & flipMask) ? 1 : 0);
 
                 // Get colour
                 if (cgb) {
-                    colour = readObjPalette(objFlags & 0x07, colourId);
+                    colour = readObjPalette(objAttr & 0x07, colourId);
                 } else {
-                    colour = getDMGColour(colourId, (objFlags & 0x10) == 0x10 ? OBP1 : OBP0);
+                    colour = getDMGColour(colourId, (objAttr & 0x10) == 0x10 ? OBP1 : OBP0);
                 }
 
                 if (colourId == 0) continue;
 
-                if (!cgb) {
-                    if (posX >= dmgXPriority) continue;
-                    dmgXPriority = posX;
-                }
-
-                bool hide = false;
+                // object priority mode check
                 if (cgb) {
-                    if (!enableOrPrio) { 
-                        if ((tileAttr & 0x80) && (lineBuffer[i + LY * SCREEN_WIDTH] % 0xF != 0)) hide = true;
-                    } else {
-                        if (lineBuffer[i + LY * SCREEN_WIDTH] % 0xF != 0) {
-                            if ((tileAttr & 0x80) || (objFlags & 0x80)) hide = true;
-                        }
-                    }
+                    // for cgb we prioritise the object that comes first in the oam buffer
+                    if (objPrio[i + LY * SCREEN_WIDTH] != 0) continue;
                 } else {
-                    if (enableOrPrio) { 
-                        if ((objFlags & 0x80) && (lineBuffer[i + LY * SCREEN_WIDTH] != 0)) {
-                            hide = true;
-                        }
-                    }
+                    // for dmg we prioritise the object with the greater x position
+                    if (posX >= dmgXPriority) continue;
+                    dmgXPriority = posX;                    
                 }
-                if (!hide) SDL_Display[i + LY * SCREEN_WIDTH] = colour;
-                prioBuffer[i + LY * SCREEN_WIDTH] = colourId;
 
+                bool showObj = true;
+                // Maybe have a seperate value for object priority mode
+                if (cgb) {
+                    if (bgColourId[i + LY * SCREEN_WIDTH] == 0) {
+                        showObj = true;
+                    } else if (!enableOrPrio) {
+                        showObj = true;
+                    } else if ((bgAttr[i + LY * SCREEN_WIDTH] & 0x80) == 0 && (objAttr & 0x80) == 0) {
+                        showObj = true;
+                    } else {
+                        showObj = false;
+                    }
+                } else if ((objAttr & 0x80) == 0x80 && bgColourId[i + LY * SCREEN_WIDTH] != 0) {
+                    showObj = false;
+                }
+
+                if (showObj) SDL_Display[i + LY * SCREEN_WIDTH] = colour;
+                objPrio[i + LY * SCREEN_WIDTH] = colourId;
             }
         }
 
@@ -649,6 +676,7 @@ uint16_t GPU::getDMGColour(uint8_t id, uint8_t palette) {
         shade = (palette & 0xC0) >> 6;
     }
 
+    // Uses the Left + B colour palette, may add a custom one later D:
     if (shade == 0) {
         return 0x7FFF;
     } else if (shade == 1) {

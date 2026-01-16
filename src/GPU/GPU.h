@@ -27,6 +27,7 @@ class GPU {
 
         uint8_t readOAM(uint16_t address);
         void writeOAM(uint16_t address, uint8_t data);
+        void writeOAMTransfer(uint16_t address, uint8_t data);
 
         uint8_t readLCD(uint16_t address);
         void writeLCD(uint16_t address, uint8_t data);

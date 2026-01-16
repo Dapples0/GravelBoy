@@ -2788,7 +2788,6 @@ void CPU::handleInterrupts() {
     sp -= 2;
     this->write16(sp, pc);
     uint16_t address = 0x0000;
-
     if (pending & VBLANK_BIT) {
         mmu->setIF(iFlag & ~VBLANK_BIT); 
         address = VBLANK_INT;

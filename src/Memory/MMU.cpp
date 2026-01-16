@@ -52,8 +52,8 @@ bool MMU::loadRom(const char *filename) {
 	}
 	std::cout << "Title: " << title << "\n";
 
+    // Sanity Check - CGB Flag
     int cgb = (int)romData[0][0x143];
-
     std::cout << "CGB Flag: " << cgb << "\n";
 
     // Sanity Check - MBC type
@@ -74,8 +74,8 @@ bool MMU::loadRom(const char *filename) {
 
     // Determines MBC Type
     setMBC(type, romData, romSize, sRamSize);
-    // bool cgbMode = cgb == 0xC0 || cgb == 0x80;
-    bool cgbMode = false;
+    bool cgbMode = cgb == 0xC0 || cgb == 0x80;
+    // bool cgbMode = false;
     this->cgb = cgbMode;
     this->gpu->setCGBMode(cgbMode);
     this->wram = this->cgb 
@@ -115,13 +115,8 @@ uint8_t MMU::read8(uint16_t address)
 
     uint8_t res = 0x00;
     // std::cout << "Reading from " << address << "\n";
-    // TEMP TODO: REMOVE
-    if (address == 0xFF44) {
-        res = 0x90; // Fake a VBlank (144) so the test can proceed
-    }
- 
     // ROM Bank
-    else if (address >= 0x0000 && address <= 0x7FFF) {
+    if (address >= 0x0000 && address <= 0x7FFF) {
         // skip boot rom
         res = this->rom->read(address);
     }
@@ -481,7 +476,7 @@ void MMU::OAMDMATransfer() {
 
     uint8_t data = this->read8(src);
     lastOAMByte = data;
-    this->write8(dest, data);
+    gpu->writeOAMTransfer(dest, data);
     bytes--;
     gpu->setOAMDMABytes(bytes);
     if (bytes == 0) gpu->setOAMTransfer(false);
