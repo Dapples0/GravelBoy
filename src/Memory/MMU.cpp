@@ -149,12 +149,12 @@ uint8_t MMU::read8(uint16_t address)
         res = hram[address & 0x7F];
     }
 
-    // Joypad TODO
+    // Joypad
     else if (address == 0xFF00) {
-        res = 0xFF;
+        res = joypad->read();
     }
 
-    // Timer and Divider TODO
+    // Timer and Divider
     else if (address >= 0xFF04 && address <= 0xFF07) {
         res = timer->read(address);
     }
@@ -164,7 +164,7 @@ uint8_t MMU::read8(uint16_t address)
         res = this->interrupt->getIF();
     }
 
-    // Audio TODO
+    // Audio
     else if (address >= 0xFF10 && address <= 0xFF3F) {
         res = 0x0;
 
@@ -184,7 +184,7 @@ uint8_t MMU::read8(uint16_t address)
     else if (cgb && address == 0xFF4F) {
         res = this->gpu->getVRAMBank();
     }
-    // Boot ROM Map TODO
+    // Boot ROM Map -> no bootrom so ignore
     else if (address == 0xFF50) {}
     // VRAM DMA
     else if (cgb && address >= 0xFF51 && address <= 0xFF55) {
@@ -232,9 +232,9 @@ void MMU::write8(uint16_t address, uint8_t data) {
     else if (address >= 0xFF80 && address <= 0xFFFE) {
         hram[address & 0x7F] = data;
     }
-    // Joypad TODO
+    // Joypad
     else if (address == 0xFF00) {
-
+        joypad->write(data);
     }
     // Serial Transfer Byte
     else if (address == 0xFF01) {
@@ -272,7 +272,7 @@ void MMU::write8(uint16_t address, uint8_t data) {
     else if (cgb && address == 0xFF4F) {
         this->gpu->setVRAMBank(data & 0x01);
     }
-    // Boot rom map TODO (Currently blank since boot rom is skipped)
+    // Boot rom map -> no bootrom so skipped
     else if (address == 0xFF50) {}
     // VRAM DMA
     else if (cgb && address >= 0xFF51 && address <= 0xFF55) {
@@ -363,24 +363,19 @@ uint8_t MMU::readPeek(uint16_t address)
 {
 
     uint8_t res = 0x00;
-    // std::cout << "Reading from " << address << "\n";
-    // TEMP TODO: REMOVE
-    if (address == 0xFF44) {
-        res = 0x90; // Fake a VBlank (144) so the test can proceed
-    }
  
     // ROM Bank
-    else if (address >= 0x0000 && address <= 0x7FFF) {
+    if (address >= 0x0000 && address <= 0x7FFF) {
         // skip boot rom
         res = this->rom->read(address);
     }
     
-    // VRAM TODO
+    // VRAM
     else if (address >= 0x8000 && address <= 0x9FFF) {
         res = 0x0;
     }
 
-    // External RAM TODO
+    // External RAM
     else if (address >= 0xA000 && address <= 0xBFFF) {
         res = this->rom->read(address);
     }
@@ -391,7 +386,7 @@ uint8_t MMU::readPeek(uint16_t address)
         res = this->readWRAM(address);
     }
 
-    // OAM RAM TODO
+    // OAM RAM
     else if (address >= 0xFE00 && address <= 0xFE9F) {
         res = 0x0;
     }
@@ -401,9 +396,9 @@ uint8_t MMU::readPeek(uint16_t address)
     }
 
 
-    // Joypad TODO
+    // Joypad
     else if (address == 0xFF00) {
-        res = 0xFF;
+        res = joypad->read();
     }
 
     // Timer and Divider
@@ -416,19 +411,19 @@ uint8_t MMU::readPeek(uint16_t address)
         res = this->interrupt->getIF();
     }
 
-    // Audio TODO
+    // Audio
     else if (address >= 0xFF10 && address <= 0xFF3F) {
         res = 0x0;
 
     }
 
-    // GPU TODO
+    // GPU
     else if (address >= 0xFF40 && address <= 0xFF4B) {
         res = 0x0;
 
     }
 
-    // OAM DMA transfer TODO
+    // OAM DMA transfer
     else if (address == 0xFF46) {
         res = 0x0;
     }
@@ -437,17 +432,17 @@ uint8_t MMU::readPeek(uint16_t address)
     else if (cgb && address == 0xFF4D) {
         res = key1;
     }
-    // VRAM Bank Select TODO
+    // VRAM Bank Select
     else if (cgb && address == 0xFF4F) {
         res = 0x0;
     }
-    // Boot ROM Map TODO
+    // Boot ROM Map
     else if (address == 0xFF50) {}
-    // VRAM DMA TODO
+    // VRAM DMA
     else if (cgb && address >= 0xFF51 && address <= 0xFF55) {
         res = 0x0;
     }
-    // BG / OBJ Palettes TOOD
+    // BG / OBJ Palettes
     else if (cgb && address >= 0xFF68 && address <= 0xFF6B) {
         res = 0x0;
     }
@@ -527,7 +522,7 @@ void MMU::HDMATransfer(bool halt, uint8_t numBytes) {
             }
         }
         gpu->setCurTransfer(curTransfer);
-        gpu->reduceHDMA(curTransfer);
+        gpu->reduceHDMA(curTransfer / 16); // HDMA Length tracks how many 0x10 bytes have been transferred during HBlank DMA
 
         if (curTransfer >= gpu->getHDMALength()) {
             gpu->endHDMATransfer();
