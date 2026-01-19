@@ -648,8 +648,8 @@ void GPU::renderScanline() {
                     // for cgb we prioritise the object that comes first in the oam buffer
                     if (objPrio[i + LY * SCREEN_WIDTH] != 0) continue;
                 } else {
-                    // for dmg we prioritise the object with the greater x position
-                    if (posX >= dmgXPriority) continue;
+                    // Prioritise smaller x position else if equal take the first object in the oam buffer
+                    if (posX > dmgXPriority || (posX == dmgXPriority && objPrio[i + LY * SCREEN_WIDTH] != 0)) continue;
                     dmgXPriority = posX;                    
                 }
 
