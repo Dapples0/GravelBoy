@@ -5,7 +5,7 @@
 
 class NOMBC : public Cartridge {
     public:
-        NOMBC(std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int romSize, int sRamSize);
+        NOMBC(std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int romSize, int extRamSize);
         ~NOMBC();
 
         uint8_t read(uint16_t address) override;

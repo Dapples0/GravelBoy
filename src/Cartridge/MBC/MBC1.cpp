@@ -1,10 +1,10 @@
 #include "MBC1.h"
 #include <iostream>
-MBC1::MBC1(std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int romSize, int sRamSize) {
+MBC1::MBC1(std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int romSize, int extRamSize) {
     this->romBank = romData;
     this->romSize = romSize;
-    this->ramSize = sRamSize;
-    this->ramBank = getRamBank(sRamSize);
+    this->ramSize = extRamSize;
+    this->ramBank = getRamBank(extRamSize);
     this->bankingMode = false;
     this->ramWrite = false;
     this->romBankNumber = 1;
@@ -38,11 +38,11 @@ uint8_t MBC1::read(uint16_t address) {
         uint16_t relative_address = address & 0x1FFF;
         if (bankingMode) {
             // return ramBank[ramBankNumber][address % SRAM_BANK_SIZE];
-            return ramBank[ramBankNumber][(address - 0xA000) % SRAM_BANK_SIZE];
+            return ramBank[ramBankNumber][relative_address];
 
         } else {
             // return ramBank[0][address % SRAM_BANK_SIZE];
-            return ramBank[0][address - 0xA000];
+            return ramBank[0][relative_address];
 
         }
     }
@@ -87,10 +87,10 @@ void MBC1::write(uint16_t address, uint8_t data) {
         }
         uint16_t relative_address = address & 0x1FFF;
         if (bankingMode) {
-            ramBank[ramBankNumber % ramBank.size()][(address - 0xA000) % SRAM_BANK_SIZE] = data;
+            ramBank[ramBankNumber % ramBank.size()][relative_address] = data;
 
         } else {
-            ramBank[0][address - 0xA000] = data;
+            ramBank[0][relative_address] = data;
         }
     }
 }

@@ -21,7 +21,7 @@ class Cartridge {
         // Catridge External Ram Banks
         std::vector<std::vector<uint8_t>> ramBank;
 
-        std::vector<std::vector<uint8_t>> getRamBank(int sRamSize);
+        std::vector<std::vector<uint8_t>> getRamBank(int extRamSize);
 
         int romSize;
         int ramSize;

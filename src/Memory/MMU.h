@@ -59,7 +59,7 @@ class MMU {
         uint8_t key1 = 0;
 
 
-        void setMBC(int type, std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int romSize, int sRamSize);
+        void setMBC(int type, std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int romSize, int extRamSize);
         uint8_t readWRAM(uint16_t address);
         void writeWRAM(uint16_t address, uint8_t data);
 

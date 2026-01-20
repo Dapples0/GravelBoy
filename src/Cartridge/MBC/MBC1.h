@@ -7,7 +7,7 @@
 
 class MBC1 : public Cartridge {
     public:
-        MBC1(std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int romSize, int sRamSize);
+        MBC1(std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int romSize, int extRamSize);
         ~MBC1();
 
         uint8_t read(uint16_t address) override;

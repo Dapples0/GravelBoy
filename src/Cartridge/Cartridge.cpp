@@ -16,10 +16,10 @@ void Cartridge::write(uint16_t address, uint8_t data)
 {
 }
 
-std::vector<std::vector<uint8_t>> Cartridge::getRamBank(int sRamSize) {
+std::vector<std::vector<uint8_t>> Cartridge::getRamBank(int extRamSize) {
     int numBanks;
     uint16_t bankSize = SRAM_BANK_SIZE;
-    switch (sRamSize) {
+    switch (extRamSize) {
         case 0x00:
             numBanks = 0;
             break;
@@ -45,7 +45,7 @@ std::vector<std::vector<uint8_t>> Cartridge::getRamBank(int sRamSize) {
             numBanks = 8;
             break;
 
-        default: // Default to 0x01
+        default: // Default to 0x02
             numBanks = 1;
             break;
     }
