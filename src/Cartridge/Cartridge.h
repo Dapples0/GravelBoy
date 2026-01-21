@@ -34,8 +34,8 @@ class Cartridge {
 
         std::string path = "";
 
-        bool loadSave();
-        void save();
+        virtual bool loadSave();
+        virtual void save();
 };
 
 

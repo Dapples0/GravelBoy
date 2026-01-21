@@ -95,7 +95,7 @@ void MMU::setMBC(int type, std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romDa
 
         case 0x01: // MBC1
             std::cout << "MBC Type: MBC1\n";
-            this->rom = std::make_unique<MBC1>(romData, romSize, 0);
+            this->rom = std::make_unique<MBC1>(romData, romSize, extRamCode);
             break;
 
         case 0x02: // MBC1 + RAM
@@ -104,7 +104,7 @@ void MMU::setMBC(int type, std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romDa
             break;     
 
         case 0x03: // MBC1 + RAM + Battery
-            std::cout << "MBC Type: MBC1 + RAM\n";
+            std::cout << "MBC Type: MBC1 + RAM + Battery\n";
             this->rom = std::make_unique<MBC1>(romData, romSize, extRamCode);
             this->rom->setBattery(title, this->cgb);
             break;

@@ -56,7 +56,9 @@ std::vector<std::vector<uint8_t>> Cartridge::getRamBank(int extRamSize) {
             ramSize = SRAM_BANK_SIZE;
             break;
     }
-
+    std::cout << "Number of RAM Banks: " << numBanks << "\n";
+    std::cout << "Bank Size: " << bankSize / 1000 << " KB" << "\n";
+    std::cout << "Total Ram Size: " << ramSize / 1000 << " KB" << "\n";
     return std::vector<std::vector<uint8_t>>(numBanks, std::vector<uint8_t>(bankSize));
 }
 
@@ -67,7 +69,7 @@ void Cartridge::setBattery(std::string title, bool cgb) {
     if (cgb) path.append("cgb.sav");
     else path.append(".sav");
     path = "saves/" + path;
-    std::cout << path << "\n";
+    std::cout << "Save filepath: " << path << "\n";
     std::string folder = "saves/";
     if (!std::filesystem::exists(folder)) std::filesystem::create_directories(folder);
 
@@ -76,46 +78,11 @@ void Cartridge::setBattery(std::string title, bool cgb) {
     
 }
 
+// Does nothing -> let subclass override the function
 bool Cartridge::loadSave() {
-    bool loaded = false;
-    std::ifstream stream(path, std::ios::binary | std::ios::ate);
-    std::cout << "RAM Size: " << ramSize << "KB" << "\n";
-    if (stream.is_open()) {
-        if (ramSize == (int)stream.tellg()) {
-            stream.seekg(0, std::ios::beg);
-            for (int i = 0; i < ramSize; ++i) {
-                // Doesn't handle cartridges with 2 KiB of external ram, but in theory no retail cartridges use it
-                int curBank = i / SRAM_BANK_SIZE;
-                uint8_t byte = stream.get();
-                ramBank[curBank][i % SRAM_BANK_SIZE] = byte;
-            }
-
-            loaded = true;
-        } else {
-            loaded = false;
-        }
-    } else {
-        // No save found
-        loaded = true;
-    }
-
-    stream.close();
-    return loaded;
+    return false;
 }
 
+// Does nothing -> let subclass override the function
 void Cartridge::save() {
-    if (battery) {
-        std::ofstream stream(path, std::ios::out | std::ios::binary);
-        if (stream.is_open()) {
-            for (int i = 0; i < ramSize; ++i) {
-                // Doesn't handle cartridges with 2 KiB of external ram, but in theory no retail cartridges use it
-                int curBank = i / SRAM_BANK_SIZE;
-                char byte = (char)ramBank[curBank][i % SRAM_BANK_SIZE];
-                stream.write(&byte, 1);
-            }
-        }
-        stream.close();
-    }
-
-    
 }

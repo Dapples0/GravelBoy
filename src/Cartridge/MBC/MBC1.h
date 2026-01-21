@@ -19,7 +19,8 @@ class MBC1 : public Cartridge {
         uint8_t romBankNumber;
         uint8_t ramBankNumber;
         bool bankingMode; // false -> default, true -> advanced
-
+        bool loadSave() override;
+        void save() override;
 };
 
 
