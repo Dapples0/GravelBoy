@@ -17,7 +17,7 @@ class Cartridge {
 
         virtual uint8_t read(uint16_t address);
         virtual void write(uint16_t address, uint8_t data);        
-        void setBattery(std::string title, bool cgb);
+        virtual void setBattery(std::string title, bool cgb);
     protected:
         // ROM Banks
         std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romBank;
@@ -34,8 +34,8 @@ class Cartridge {
 
         std::string path = "";
 
-        virtual bool loadSave();
-        virtual void save();
+        bool loadSave();
+        void save();
 };
 
 

@@ -12,7 +12,8 @@ class MBC3 : public Cartridge {
         ~MBC3();
 
         uint8_t read(uint16_t address) override;
-        void write(uint16_t address, uint8_t data) override;        
+        void write(uint16_t address, uint8_t data) override;
+        void setBattery(std::string title, bool cgb) override;   
     private:
         bool timer = false;
         // Registers
@@ -20,8 +21,6 @@ class MBC3 : public Cartridge {
         uint8_t romBankNumber;
         uint8_t ramBankNumber;
         bool bankingMode; // false -> default, true -> advanced
-        bool loadSave() override;
-        void save() override;
 };
 
 

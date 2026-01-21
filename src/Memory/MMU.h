@@ -18,6 +18,7 @@
 #include "../IO/Timer.h"
 #include "../Cartridge/MBC/NOMBC.h"
 #include "../Cartridge/MBC/MBC1.h"
+#include "../Cartridge/MBC/MBC3.h"
 #include "../IO/Interrupts.h"
 
 

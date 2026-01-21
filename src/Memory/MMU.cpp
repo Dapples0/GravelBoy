@@ -108,6 +108,37 @@ void MMU::setMBC(int type, std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romDa
             this->rom = std::make_unique<MBC1>(romData, romSize, extRamCode);
             this->rom->setBattery(title, this->cgb);
             break;
+
+        case 0x0F: // MBC3 + Timer + Battery
+            std::cout << "MBC Type: MBC3 + Timer + Battery\n";
+            this->rom = std::make_unique<MBC3>(romData, romSize, extRamCode);
+            this->rom->setBattery(title, this->cgb);
+            break;
+
+        case 0x10: // MBC3 + Timer + RAM + Battery
+            std::cout << "MBC Type: MBC3 + Timer + RAM + Battery\n";
+            this->rom = std::make_unique<MBC3>(romData, romSize, extRamCode);
+            this->rom->setBattery(title, this->cgb);
+            break;
+
+        case 0x11: // MBC3
+            std::cout << "MBC Type: MBC3\n";
+            this->rom = std::make_unique<MBC3>(romData, romSize, extRamCode);
+            this->rom->setBattery(title, this->cgb);
+            break;
+
+        case 0x12: // MBC3 + RAM
+            std::cout << "MBC Type: MBC3 + RAM\n";
+            this->rom = std::make_unique<MBC3>(romData, romSize, extRamCode);
+            this->rom->setBattery(title, this->cgb);
+            break;
+            
+        case 0x13: // MBC3 + RAM + Battery
+            std::cout << "MBC Type: MBC3 + RAM + Battery\n";
+            this->rom = std::make_unique<MBC3>(romData, romSize, extRamCode);
+            this->rom->setBattery(title, this->cgb);
+            break;
+
         default:
             std::cout << "No MBC type found, defaulting to MBC1\n";
             break;
