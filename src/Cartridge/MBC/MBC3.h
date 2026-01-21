@@ -1,19 +1,20 @@
-#ifndef MBC1_H
-#define MB1C_H
+#ifndef MBC3_H
+#define MB3C_H
 
 #include "../../constants.h"
 
 #include "../Cartridge.h"
 
-class MBC1 : public Cartridge {
+
+class MBC3 : public Cartridge {
     public:
-        MBC1(std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int romSize, int extRamCode);
-        ~MBC1();
+        MBC3(std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int romSize, int extRamCode);
+        ~MBC3();
 
         uint8_t read(uint16_t address) override;
         void write(uint16_t address, uint8_t data) override;        
     private:
-
+        bool timer = false;
         // Registers
         bool ramWrite; // Determines whether external RAM can be read or written
         uint8_t romBankNumber;
@@ -22,6 +23,13 @@ class MBC1 : public Cartridge {
         bool loadSave() override;
         void save() override;
 };
+
+
+
+
+
+
+
 
 
 #endif
