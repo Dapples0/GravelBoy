@@ -55,7 +55,7 @@ void MBC3::write(uint16_t address, uint8_t data) {
     else if (address >= 0x2000 && address <= 0x3FFF) {
         romBankNumber = (data & 0x7F) == 0 ? 1 : (data & 0x7F);
     }
-    // RAM Bank Number / RTC Register Seelct
+    // RAM Bank Number / RTC Register Select
     else if (address >= 0x4000 && address <= 0x5FFF) {
         ramBankRTCSelect = data;
     }
@@ -77,7 +77,6 @@ void MBC3::write(uint16_t address, uint8_t data) {
             ramBank[ramBankRTCSelect][relative_address] = data;
         }
         else if (ramBankRTCSelect >= 0x08 && ramBankRTCSelect <= 0x0C) {
-            updateTimer();
             if (ramBankRTCSelect == 0x08) {
                 rtSec = data;
             }
@@ -93,6 +92,7 @@ void MBC3::write(uint16_t address, uint8_t data) {
             else if (ramBankRTCSelect == 0x0C) {
                 rtDaysUpper = data;
             }
+            updateTimer();
         }
     }
 
@@ -154,6 +154,8 @@ void MBC3::updateTimer() {
     if (!RTC) return;
     time_t now = time(nullptr);
 
+    // Implementaion of timer update is taken from Ghost Boy implementation by GhostSonic21
+    // May need to update/overhaul as RTC doesn't always function correctly in games
     if ((rtDaysUpper & 0x40) == 0x40) {
         curTime = now;
         return;
@@ -163,26 +165,26 @@ void MBC3::updateTimer() {
 
     curTime = now;
 
-    unsigned int seconds = rtSec + (diff % 60);
+    unsigned int seconds = rtSec + diff;
     rtSec = seconds % 60;
 
-    unsigned int minutes = rtMin + (diff / 60 % 60) + (seconds / 60);
+    unsigned int minutes = rtMin + (seconds / 60);
     rtMin = minutes % 60;
 
-    unsigned int hours = rtHours + (diff / 3600 % 24) + (minutes / 60);
+    unsigned int hours = rtHours + (minutes / 60);
     rtHours = hours % 24;
 
     unsigned int days = rtDaysLower | ((rtDaysUpper & 0x01) << 8);
-    days += (diff / 86400) + (hours / 24);
-
-    if (days > 511) {
-        days %= 512;
-        rtDaysUpper |= 0x80;
-    }
+    days += (hours / 24);
 
     rtDaysLower = days & 0xFF;
     rtDaysUpper = (rtDaysUpper & 0xFE) | ((days >> 8) & 0x01);
-    
+
+    if (days > 511) {
+        rtDaysUpper |= 0x80;
+    }
+
+
 }
 
 void MBC3::latchTimer() {
