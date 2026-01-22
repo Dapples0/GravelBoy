@@ -19,6 +19,7 @@
 #include "../Cartridge/MBC/NOMBC.h"
 #include "../Cartridge/MBC/MBC1.h"
 #include "../Cartridge/MBC/MBC3.h"
+#include "../Cartridge/MBC/MBC5.h"
 #include "../IO/Interrupts.h"
 
 

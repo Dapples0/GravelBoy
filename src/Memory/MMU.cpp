@@ -71,7 +71,6 @@ bool MMU::loadRom(const char *filename) {
 
 
     bool cgbMode = cgb == 0xC0 || cgb == 0x80;
-    // bool cgbMode = false;
     this->cgb = cgbMode;
     this->gpu->setCGBMode(cgbMode);
     
@@ -137,8 +136,43 @@ void MMU::setMBC(int type, std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romDa
             this->rom->setBattery(title, this->cgb);
             break;
 
+        case 0x19: // MBC5
+            std::cout << "MBC Type: MBC5\n";
+            this->rom = std::make_unique<MBC5>(romData, romSize, extRamCode);
+            break;
+
+        case 0x1A: // MBC5 + RAM
+            std::cout << "MBC Type: MBC5 + RAM\n";
+            this->rom = std::make_unique<MBC5>(romData, romSize, extRamCode);
+            break;
+            
+        case 0x1B: // MBC5 + RAM + Battery
+            std::cout << "MBC Type: MBC5 + RAM + Battery\n";
+            this->rom = std::make_unique<MBC5>(romData, romSize, extRamCode);
+            this->rom->setBattery(title, this->cgb);
+            break;
+            
+        case 0x1C: // MBC5 + Rumble
+            std::cout << "MBC Type: MBC5 + Rumble\n";
+            this->rom = std::make_unique<MBC5>(romData, romSize, extRamCode);
+            break;
+            
+        case 0x1D: // MBC5 + Rumble + RAM
+            std::cout << "MBC Type: MBC5 + Rumble + RAM\n";
+            this->rom = std::make_unique<MBC5>(romData, romSize, extRamCode);
+            this->rom->setBattery(title, this->cgb);
+
+            break;
+            
+        case 0x1E: // MBC + Rumble + RAM + Battery
+            std::cout << "MBC Type: MBC + Rumble + RAM + Battery\n";
+            this->rom = std::make_unique<MBC5>(romData, romSize, extRamCode);
+            this->rom->setBattery(title, this->cgb);
+            break;
+
         default:
             std::cout << "No MBC type found, defaulting to MBC1\n";
+            this->rom = std::make_unique<MBC1>(romData, romSize, extRamCode);
             break;
     }
 }
@@ -146,9 +180,7 @@ void MMU::setMBC(int type, std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romDa
 
 uint8_t MMU::read8(uint16_t address)
 {
-
     uint8_t res = 0x00;
-    // std::cout << "Reading from " << address << "\n";
     // ROM Bank
     if (address >= 0x0000 && address <= 0x7FFF) {
         // skip boot rom
@@ -195,7 +227,7 @@ uint8_t MMU::read8(uint16_t address)
         res = this->interrupt->getIF();
     }
 
-    // Audio
+    // Audio TODO
     else if (address >= 0xFF10 && address <= 0xFF3F) {
         res = 0x0;
 
@@ -239,7 +271,6 @@ uint8_t MMU::read8(uint16_t address)
 
 
 void MMU::write8(uint16_t address, uint8_t data) {
-    // std::cout << "Writing to " << address << "\n";
     if (address >= 0x0000 && address <= 0x7FFF) {
         this->rom->write(address, data);
     }
@@ -282,7 +313,6 @@ void MMU::write8(uint16_t address, uint8_t data) {
     else if (address >= 0xFF04 && address <= 0xFF07) {
         timer->write(address, data);
     }
-
     // IF
     else if (address == 0xFF0F) {
         this->interrupt->setIF(data);
