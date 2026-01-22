@@ -1,12 +1,11 @@
 #include "MBC1.h"
 #include <iostream>
-MBC1::MBC1(std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int romSize, int sRamSize) {
+MBC1::MBC1(std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int romSize, int extRamCode) {
     this->romBank = romData;
     this->romSize = romSize;
-    this->ramSize = sRamSize;
-    this->ramBank = getRamBank(sRamSize);
+    this->ramBank = getRamBank(extRamCode);
     this->bankingMode = false;
-    this->ramWrite = false;
+    this->ramEnable = false;
     this->romBankNumber = 1;
     this->ramBankNumber = 0;
 }
@@ -26,23 +25,23 @@ uint8_t MBC1::read(uint16_t address) {
     }
     // Read from ROM Bank 1-NN
     else if (address >= 0x4000 && address <= 0x7FFF) {
-        return romBank[((ramBankNumber << 5) + romBankNumber) % romBank.size()][(address - 0x4000) % ROM_BANK_SIZE];
+        return romBank[((ramBankNumber << 5) + romBankNumber) % romBank.size()][address % ROM_BANK_SIZE];
 
     }
     // Read from External RAM
     else if (address >= 0xA000 && address <= 0xBFFF) {
         
-        if (ramSize == 0 || !ramWrite || ramBank.size() == 0) {
+        if (ramSize == 0 || !ramEnable || ramBank.size() == 0) {
             return 0xFF;
         }
         uint16_t relative_address = address & 0x1FFF;
         if (bankingMode) {
             // return ramBank[ramBankNumber][address % SRAM_BANK_SIZE];
-            return ramBank[ramBankNumber][(address - 0xA000) % SRAM_BANK_SIZE];
+            return ramBank[ramBankNumber][relative_address];
 
         } else {
             // return ramBank[0][address % SRAM_BANK_SIZE];
-            return ramBank[0][address - 0xA000];
+            return ramBank[0][relative_address];
 
         }
     }
@@ -56,10 +55,10 @@ void MBC1::write(uint16_t address, uint8_t data) {
     // RAM Enable (Write Only)
     if (address <= 0x1FFF) {
         if ((data & 0x0F) == 0x0A) {
-            ramWrite = true;
+            ramEnable = true;
         } else {
-            ramWrite = false;
-            // battery save here TODO
+            ramEnable = false;
+            if (battery) save();
         }        
     } 
     // ROM Bank Number (Write Only) - Selects which ROM Bank to use
@@ -82,15 +81,31 @@ void MBC1::write(uint16_t address, uint8_t data) {
     // Write to External RAM
     if (address >= 0xA000 && address <= 0xBFFF) {
         
-        if (ramSize == 0 || !ramWrite || ramBank.size() == 0) {
+        if (ramSize == 0 || !ramEnable || ramBank.size() == 0) {
             return;
         }
         uint16_t relative_address = address & 0x1FFF;
         if (bankingMode) {
-            ramBank[ramBankNumber % ramBank.size()][(address - 0xA000) % SRAM_BANK_SIZE] = data;
+            ramBank[ramBankNumber % ramBank.size()][relative_address] = data;
 
         } else {
-            ramBank[0][address - 0xA000] = data;
+            ramBank[0][relative_address] = data;
         }
     }
+}
+
+void MBC1::setBattery(std::string title, bool cgb) {
+    path = title;
+
+    // handles cases where cgb enhancement version of a game shares the same title of the dmg version
+    if (cgb) path.append("cgb.sav");
+    else path.append(".sav");
+    path = "saves/" + path;
+    std::cout << "Save filepath: " << path << "\n";
+    std::string folder = "saves/";
+    if (!std::filesystem::exists(folder)) std::filesystem::create_directories(folder);
+
+    battery = loadSave();
+
+    
 }

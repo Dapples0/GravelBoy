@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iomanip>
 #include <SDL2/SDL.h>
+#include <array>
 
 #include "gb.h"
 
@@ -40,42 +41,66 @@ void gb::run(const char *filename) {
     gpu.attatchSDL();
     SDL_Event event;
 
-    // std::ofstream file("logs/cpu_debug.txt");
-    uint32_t i = 0;
-
-    uint32_t cycles_until_poll = 0;
     bool running = true;
-    while (running) {
-        // if (i <= 325820) {
-            // file << cpu.debug();
-        // }
 
-        // TODO remove later -> here to make tests run faster
-        if (++cycles_until_poll > 10000) {
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) running = false;
+    uint32_t lastFrameTime = SDL_GetTicks();
+
+    /** Toggles framerate
+     * Increasing framerate does not speed up the "real-time" that is passed in game
+     * so for games like pokemon GSC, save time and pokegear time will not sync
+     */
+    std::array<uint8_t, 4> framerate = {60, 120, 180, 240};
+    uint8_t frameRateIndex = 0;
+    uint32_t ticksPerFrame = 1000 / framerate[0];
+
+    while (running) {    
+        if (!gpu.isFrameReady()) {
+            cpu.execute();
+        } else {
+            while (SDL_PollEvent(&event)) {
+                if (event.type == SDL_QUIT) running = false;
+                if (event.type == SDL_KEYDOWN) {
+                    switch (event.key.keysym.scancode) {
+                        case SDL_SCANCODE_MINUS:
+                            frameRateIndex = frameRateIndex == 0 ? 0 : --frameRateIndex;
+                            ticksPerFrame = 1000 / framerate[frameRateIndex];
+                            break;
+
+                        case SDL_SCANCODE_EQUALS:
+                            frameRateIndex = frameRateIndex == 3 ? 3 : ++frameRateIndex;
+                            ticksPerFrame = 1000 / framerate[frameRateIndex];
+                            break;
+
+                        default:
+                            break;
+
+                            
+                    }
+                }
+            }
+            uint32_t frameTime = SDL_GetTicks() - lastFrameTime;
+            if (frameTime < ticksPerFrame) {
+                SDL_Delay(ticksPerFrame - frameTime);
+            }
+            lastFrameTime = SDL_GetTicks();
+            gpu.setFrameReady(false);
         }
-        cycles_until_poll = 0;
-    }
         
-        // if (gpu.getPPUMode() != V_BLANK) 
-        cpu.execute();
         
   
 
         // Debugging -> checks if cycles match expected cycles TODO: Remove
-        if (cpu.cb) {
-            if ((int)cpu.cyclesPassed + cpu.interruptCycles != cpu.cycles && !cpu.none) {
-                std::cout << std::hex << std::uppercase << std::setfill('0') << std::setw(2) << "CB" << (int)cpu.op << " | " << std::dec << cpu.cycles << "-" <<  (int)cpu.cyclesPassed << " \n";
+        // if (cpu.cb) {
+        //     if ((int)cpu.cyclesPassed + cpu.interruptCycles != cpu.cycles && !cpu.none) {
+        //         std::cout << std::hex << std::uppercase << std::setfill('0') << std::setw(2) << "CB" << (int)cpu.op << " | " << std::dec << cpu.cycles << "-" <<  (int)cpu.cyclesPassed << " \n";
                 
-            }
-        } else {
-            if ((int)cpu.cyclesPassed + cpu.interruptCycles != cpu.cycles && !cpu.none) {
-                std::cout << std::hex << std::uppercase << std::setfill('0') << std::setw(2) <<  (int)cpu.op << " | " << std::dec << cpu.cycles << "-" <<  (int)cpu.cyclesPassed << " \n";
-            }
-        }
-        cpu.cycles = 0;
-        i++;
+        //     }
+        // } else {
+        //     if ((int)cpu.cyclesPassed + cpu.interruptCycles != cpu.cycles && !cpu.none) {
+        //         std::cout << std::hex << std::uppercase << std::setfill('0') << std::setw(2) <<  (int)cpu.op << " | " << std::dec << cpu.cycles << "-" <<  (int)cpu.cyclesPassed << " \n";
+        //     }
+        // }
+
     }
 
     // file.close();

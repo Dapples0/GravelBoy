@@ -1,8 +1,5 @@
 #include "MMU.h"
 
-#include <fstream>
-#include <iostream>
-#include <ios>
 
 MMU::MMU()
 {
@@ -22,7 +19,6 @@ void MMU::connect(GPU *gpu, Joypad *joypad, Timer *timer, APU *apu, Interrupts *
 
 bool MMU::loadRom(const char *filename) {
 
-    std::ifstream file;
     std::ifstream stream(filename, std::ios::binary | std::ios::ate);
     int romSize;
     int currentRomBank;
@@ -37,20 +33,21 @@ bool MMU::loadRom(const char *filename) {
 
         for (int i = 0; i < romSize; i++) {
             currentRomBank = i / ROM_BANK_SIZE;
-            uint8_t bbyte = stream.get();
-            romData[currentRomBank][i % ROM_BANK_SIZE]= bbyte;
+            uint8_t byte = stream.get();
+            romData[currentRomBank][i % ROM_BANK_SIZE]= byte;
         }
         stream.close();
     } else {
         std::cout << "Bad ROM" << "\n";
     }
-    // Sanity check - Title
-	char title[17];
-	title[16] = 0x00;
-	for (int i = 0; i < 16; i++) {
-		title[i] = (char)romData[0][0x134 + i];
-	}
-	std::cout << "Title: " << title << "\n";
+
+    // Sanity check - Title -> title is between 0x0134 - 0x013E as it is the smallest possible title that won't extend to any possible manufacturer code
+    char titleBuffer[17] = {0};
+    std::copy(romData[0].begin() + 0x0134, romData[0].begin() + 0x013F, titleBuffer);
+
+    std::string title(titleBuffer);
+    std::cout << "Title: " << title << "\n";
+    
 
     // Sanity Check - CGB Flag
     int cgb = (int)romData[0][0x143];
@@ -62,9 +59,9 @@ bool MMU::loadRom(const char *filename) {
 
     // Remember to save battery here as it is for save states
 
-    // Sanity Check - SRAM Size
-    int sRamSize = (int)romData[0][0x149];
-    std::cout << "SRAM Size: " << sRamSize << "\n";
+    // Sanity Check - External RAM Code
+    int extRamCode = (int)romData[0][0x149];
+    std::cout << "External RAM Code: " << extRamCode << "\n";
 
     
 
@@ -72,42 +69,110 @@ bool MMU::loadRom(const char *filename) {
 	int headerRomSize = (int)romData[0][0x148];
 	std::cout << "ROM Size: " << 32 * (1 << headerRomSize) << "KB\n";
 
-    // Determines MBC Type
-    setMBC(type, romData, romSize, sRamSize);
+
     bool cgbMode = cgb == 0xC0 || cgb == 0x80;
-    // bool cgbMode = false;
     this->cgb = cgbMode;
     this->gpu->setCGBMode(cgbMode);
+    
     this->wram = this->cgb 
     ? std::vector<std::vector<uint8_t>>(8, std::vector<uint8_t>(WRAM_BANK_SIZE)) 
     : std::vector<std::vector<uint8_t>>(2, std::vector<uint8_t>(WRAM_BANK_SIZE));
+
+    // Determines MBC Type
+    setMBC(type, romData, romSize, extRamCode, title);
+
     return cgbMode;
 
 }
 
-void MMU::setMBC(int type, std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int romSize, int sRamSize) {
+void MMU::setMBC(int type, std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int romSize, int extRamCode, std::string title) {
     switch (type) {
         case 0x00: // ROM ONLY
             std::cout << "MBC Type: NOMBC\n";
-            this->rom = std::make_unique<NOMBC>(romData, romSize, sRamSize);
+            this->rom = std::make_unique<NOMBC>(romData, romSize, extRamCode);
             break;
 
         case 0x01: // MBC1
             std::cout << "MBC Type: MBC1\n";
-            this->rom = std::make_unique<MBC1>(romData, romSize, 0);
+            this->rom = std::make_unique<MBC1>(romData, romSize, extRamCode);
             break;
 
         case 0x02: // MBC1 + RAM
             std::cout << "MBC Type: MBC1 + RAM\n";
-            this->rom = std::make_unique<MBC1>(romData, romSize, sRamSize);
+            this->rom = std::make_unique<MBC1>(romData, romSize, extRamCode);
             break;     
 
         case 0x03: // MBC1 + RAM + Battery
-            std::cout << "MBC Type: MBC1 + RAM\n";
-            this->rom = std::make_unique<MBC1>(romData, romSize, sRamSize);
-            break;  
+            std::cout << "MBC Type: MBC1 + RAM + Battery\n";
+            this->rom = std::make_unique<MBC1>(romData, romSize, extRamCode);
+            this->rom->setBattery(title, this->cgb);
+            break;
+
+        case 0x0F: // MBC3 + Timer + Battery
+            std::cout << "MBC Type: MBC3 + Timer + Battery\n";
+            this->rom = std::make_unique<MBC3>(romData, romSize, extRamCode, true);
+            this->rom->setBattery(title, this->cgb);
+            break;
+
+        case 0x10: // MBC3 + Timer + RAM + Battery
+            std::cout << "MBC Type: MBC3 + Timer + RAM + Battery\n";
+            this->rom = std::make_unique<MBC3>(romData, romSize, extRamCode, true);
+            this->rom->setBattery(title, this->cgb);
+            break;
+
+        case 0x11: // MBC3
+            std::cout << "MBC Type: MBC3\n";
+            this->rom = std::make_unique<MBC3>(romData, romSize, extRamCode, false);
+            break;
+
+        case 0x12: // MBC3 + RAM
+            std::cout << "MBC Type: MBC3 + RAM\n";
+            this->rom = std::make_unique<MBC3>(romData, romSize, extRamCode, false);
+            break;
+            
+        case 0x13: // MBC3 + RAM + Battery
+            std::cout << "MBC Type: MBC3 + RAM + Battery\n";
+            this->rom = std::make_unique<MBC3>(romData, romSize, extRamCode, false);
+            this->rom->setBattery(title, this->cgb);
+            break;
+
+        case 0x19: // MBC5
+            std::cout << "MBC Type: MBC5\n";
+            this->rom = std::make_unique<MBC5>(romData, romSize, extRamCode);
+            break;
+
+        case 0x1A: // MBC5 + RAM
+            std::cout << "MBC Type: MBC5 + RAM\n";
+            this->rom = std::make_unique<MBC5>(romData, romSize, extRamCode);
+            break;
+            
+        case 0x1B: // MBC5 + RAM + Battery
+            std::cout << "MBC Type: MBC5 + RAM + Battery\n";
+            this->rom = std::make_unique<MBC5>(romData, romSize, extRamCode);
+            this->rom->setBattery(title, this->cgb);
+            break;
+            
+        case 0x1C: // MBC5 + Rumble
+            std::cout << "MBC Type: MBC5 + Rumble\n";
+            this->rom = std::make_unique<MBC5>(romData, romSize, extRamCode);
+            break;
+            
+        case 0x1D: // MBC5 + Rumble + RAM
+            std::cout << "MBC Type: MBC5 + Rumble + RAM\n";
+            this->rom = std::make_unique<MBC5>(romData, romSize, extRamCode);
+            this->rom->setBattery(title, this->cgb);
+
+            break;
+            
+        case 0x1E: // MBC + Rumble + RAM + Battery
+            std::cout << "MBC Type: MBC + Rumble + RAM + Battery\n";
+            this->rom = std::make_unique<MBC5>(romData, romSize, extRamCode);
+            this->rom->setBattery(title, this->cgb);
+            break;
+
         default:
             std::cout << "No MBC type found, defaulting to MBC1\n";
+            this->rom = std::make_unique<MBC1>(romData, romSize, extRamCode);
             break;
     }
 }
@@ -115,9 +180,7 @@ void MMU::setMBC(int type, std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romDa
 
 uint8_t MMU::read8(uint16_t address)
 {
-
     uint8_t res = 0x00;
-    // std::cout << "Reading from " << address << "\n";
     // ROM Bank
     if (address >= 0x0000 && address <= 0x7FFF) {
         // skip boot rom
@@ -164,7 +227,7 @@ uint8_t MMU::read8(uint16_t address)
         res = this->interrupt->getIF();
     }
 
-    // Audio
+    // Audio TODO
     else if (address >= 0xFF10 && address <= 0xFF3F) {
         res = 0x0;
 
@@ -208,7 +271,6 @@ uint8_t MMU::read8(uint16_t address)
 
 
 void MMU::write8(uint16_t address, uint8_t data) {
-    // std::cout << "Writing to " << address << "\n";
     if (address >= 0x0000 && address <= 0x7FFF) {
         this->rom->write(address, data);
     }
@@ -251,7 +313,6 @@ void MMU::write8(uint16_t address, uint8_t data) {
     else if (address >= 0xFF04 && address <= 0xFF07) {
         timer->write(address, data);
     }
-
     // IF
     else if (address == 0xFF0F) {
         this->interrupt->setIF(data);
