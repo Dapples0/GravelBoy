@@ -5,7 +5,7 @@ MBC5::MBC5(std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int romSize,
     this->romSize = romSize;
     this->ramBank = getRamBank(extRamCode);
     this->bankingMode = false;
-    this->ramWrite = false;
+    this->ramEnable = false;
     this->romBankNumber = 0;
     this->ramBankNumber = 0;
 }
@@ -24,7 +24,7 @@ uint8_t MBC5::read(uint16_t address) {
     }
     // RAM Bank 00-0F
     else if (address >= 0xA000 && address <= 0xBFFF) {
-        if (ramSize == 0 || !ramWrite || ramBank.size() == 0) {
+        if (ramSize == 0 || !ramEnable || ramBank.size() == 0) {
             return 0xFF;
         }
 
@@ -38,9 +38,9 @@ void MBC5::write(uint16_t address, uint8_t data) {
     // RAM Enable
     if (address >= 0x0000 && address <= 0x1FFF) {
         if ((data & 0x0F) == 0x0A) {
-            ramWrite = true;
+            ramEnable = true;
         } else {
-            ramWrite = false;
+            ramEnable = false;
             if (battery) save();
         }  
     }
@@ -58,7 +58,7 @@ void MBC5::write(uint16_t address, uint8_t data) {
     }
     // RAM Bank 00-0F
     else if (address >= 0xA000 && address <= 0xBFFF) {
-        if (ramSize == 0 || !ramWrite || ramBank.size() == 0) {
+        if (ramSize == 0 || !ramEnable || ramBank.size() == 0) {
             return;
         }
 

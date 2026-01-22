@@ -16,7 +16,7 @@ class MBC5 : public Cartridge {
     private:
 
     // Registers
-    bool ramWrite; // Determines whether external RAM can be read or written
+    bool ramEnable; // Determines whether external RAM can be read or written
     uint16_t romBankNumber;
     uint8_t ramBankNumber;
     bool bankingMode; // false -> default, true -> advanced

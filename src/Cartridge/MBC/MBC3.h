@@ -17,7 +17,7 @@ class MBC3 : public Cartridge {
         void setBattery(std::string title, bool cgb) override;   
     private:
         // Registers
-        bool ramWrite; // Determines whether external RAM can be read or written
+        bool ramEnable; // Determines whether external RAM can be read or written
         uint8_t romBankNumber;
         uint8_t ramBankRTCSelect; // RAM Bank Number - or - RTC Register Select (Write Only)
 

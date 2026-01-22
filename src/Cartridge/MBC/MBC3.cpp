@@ -4,7 +4,7 @@ MBC3::MBC3(std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int romSize,
     this->romBank = romData;
     this->romSize = romSize;
     this->ramBank = getRamBank(extRamCode);
-    this->ramWrite = false;
+    this->ramEnable = false;
     this->romBankNumber = 1;
     this->ramBankRTCSelect = 0;
     this->RTC = timer;
@@ -25,7 +25,7 @@ uint8_t MBC3::read(uint16_t address) {
     }
     // (External RAM) RAM Bank 00-07 or RTC Registers
     else if (address >= 0xA000 && address <= 0xBFFF) {
-        if (!ramWrite || ramSize == 0 || ramBank.size() == 0) {
+        if (!ramEnable || ramSize == 0 || ramBank.size() == 0) {
             return 0xFF;
         }
         uint16_t relative_address = address & 0x1FFF;
@@ -45,9 +45,9 @@ void MBC3::write(uint16_t address, uint8_t data) {
     // RAM Enable (Write Only)
     if (address <= 0x1FFF) {
         if ((data & 0x0F) == 0x0A) {
-            ramWrite = true;
+            ramEnable = true;
         } else {
-            ramWrite = false;
+            ramEnable = false;
             if (battery) MBC3Save();
         }        
     }
@@ -69,7 +69,7 @@ void MBC3::write(uint16_t address, uint8_t data) {
     }
     // (External RAM) RAM Bank 00-07 or RTC Registers
     else if (address >= 0xA000 && address <= 0xBFFF) {
-        if (ramSize == 0 || !ramWrite || ramBank.size() == 0) {
+        if (ramSize == 0 || !ramEnable || ramBank.size() == 0) {
             return;
         }
         uint16_t relative_address = address & 0x1FFF;

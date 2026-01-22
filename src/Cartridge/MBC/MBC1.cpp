@@ -5,7 +5,7 @@ MBC1::MBC1(std::vector<std::array<uint8_t, ROM_BANK_SIZE>> romData, int romSize,
     this->romSize = romSize;
     this->ramBank = getRamBank(extRamCode);
     this->bankingMode = false;
-    this->ramWrite = false;
+    this->ramEnable = false;
     this->romBankNumber = 1;
     this->ramBankNumber = 0;
 }
@@ -31,7 +31,7 @@ uint8_t MBC1::read(uint16_t address) {
     // Read from External RAM
     else if (address >= 0xA000 && address <= 0xBFFF) {
         
-        if (ramSize == 0 || !ramWrite || ramBank.size() == 0) {
+        if (ramSize == 0 || !ramEnable || ramBank.size() == 0) {
             return 0xFF;
         }
         uint16_t relative_address = address & 0x1FFF;
@@ -55,9 +55,9 @@ void MBC1::write(uint16_t address, uint8_t data) {
     // RAM Enable (Write Only)
     if (address <= 0x1FFF) {
         if ((data & 0x0F) == 0x0A) {
-            ramWrite = true;
+            ramEnable = true;
         } else {
-            ramWrite = false;
+            ramEnable = false;
             if (battery) save();
         }        
     } 
@@ -81,7 +81,7 @@ void MBC1::write(uint16_t address, uint8_t data) {
     // Write to External RAM
     if (address >= 0xA000 && address <= 0xBFFF) {
         
-        if (ramSize == 0 || !ramWrite || ramBank.size() == 0) {
+        if (ramSize == 0 || !ramEnable || ramBank.size() == 0) {
             return;
         }
         uint16_t relative_address = address & 0x1FFF;
