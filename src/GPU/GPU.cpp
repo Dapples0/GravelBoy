@@ -54,7 +54,6 @@ void GPU::tick(uint8_t dots) {
         PPUmode = H_BLANK;
         STAT &= 0xFC;
 
-        // TODO clear obj, background and scanline
         clear();
 
         return;
@@ -74,7 +73,6 @@ void GPU::tick(uint8_t dots) {
             OAMScan();
         }
         else if (PPUmode == DRAWING_PIXELS) {
-            // Hybrid FIFO + scanline rendering approach -> essentially renders whole scanline and waits until an appropriate number of dots have been passed
             DrawingPixels();
         }
         else {
@@ -321,9 +319,7 @@ void GPU::writeHDMA(uint16_t address, uint8_t data) {
 
                     HDMASrc = (HDMA1 << 8) | HDMA2;
                     HDMADes = (HDMA3 << 8) | HDMA4;
-                    std::cout << std::hex << std::uppercase << std::setfill('0') << "Source: 0x" << std::setw(4) << (int)HDMASrc  << std::dec << "\n";
-                    std::cout << std::hex << std::uppercase << std::setfill('0') << "Source: 0x" << std::setw(4) << (int)HDMADes << std::dec << "\n";
-                    std::cout << "Length: " << (int)HDMALen << "\n";
+
                     hblankBurst = true;
                     HDMA5 = (HDMAmode << 7) | (data & 0x7F);
                 } else if ((data & 0x80) != 0x80 && transfer && HDMAmode == HBLANK_DMA) {

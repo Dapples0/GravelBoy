@@ -21,15 +21,7 @@ void CPU::connect(MMU *mmu, Timer *timer, GPU *gpu) {
 void CPU::execute() {
     if (stop_delay > 0) {
         stop_delay--;
-        cyclesPassed = 4;
-        cycles = 4;
         return;
-    }
-
-    if (gpu->checkHDMATransfer()) {
-        none = true;
-    } else {
-        none = false;
     }
 
     if (!halt && !gpu->checkHDMATransfer()) {
@@ -51,9 +43,6 @@ void CPU::execute() {
 void CPU::executeInstruction(uint8_t opcode) {
 
     pc++;
-    op = opcode;
-    cb = false;
-    cyclesPassed = opcodeCycles[opcode];
     switch (opcode) {
         case 0xCB: // 0xCB Prefixed
             executeCBInstruction(this->read8(pc));
@@ -1034,11 +1023,7 @@ void CPU::executeInstruction(uint8_t opcode) {
             break;
 
         case 0xC9: // RET
-            // RET(true);
             RETUNC();
-
-            // Unconditonal RET has cycles be 16
-            cyclesPassed = 16;
             break;
 
         case 0xD0: // RET NC
@@ -1054,12 +1039,8 @@ void CPU::executeInstruction(uint8_t opcode) {
             ime = true;
             ei_hold = false;
 
-            // RET(true);
             RETUNC();
 
-
-            // Unconditonal RETI has cycles be 16
-            cyclesPassed = 16;
             break;
         
         case 0xC7: // RST 00h
@@ -1181,7 +1162,6 @@ void CPU::executeInstruction(uint8_t opcode) {
             setH(((sp & 0x0F) + (val & 0x0F)) > 0x0F);
             setC(((sp & 0xFF) + val) > 0xFF);
 
-            //TODO might not be in correct place
             this->tick();
             sp += (int8_t)val;
 
@@ -1247,9 +1227,6 @@ void CPU::executeInstruction(uint8_t opcode) {
 
 void CPU::executeCBInstruction(uint8_t opcode) {
     pc++;
-    op = opcode;
-    cb = true;
-    cyclesPassed = opcodeCBCycles[opcode];
     switch (opcode) {
         /**
          * RLC Instructions 
@@ -2228,10 +2205,9 @@ void CPU::tick() {
 
     // Transfer one byte in double speed by two bytes in normal speed
     mmu->HDMATransfer(halt, doubleSpeed ? 1 : 2);
-    // gpu + apu tick here
     gpu->tick(doubleSpeed ? 2 : 4);
+    // apu->tick(doubleSpeed ? 2 : 4);
     
-    cycles += 4;
 }
 
 uint8_t CPU::read8(uint16_t address) {
@@ -2411,10 +2387,6 @@ void CPU::RET(bool condition) {
         uint8_t high = this->read8(sp++);    
         pc = (high << 8) | low;
         this->tick();
-        // With condition cycles passed is 20
-        cyclesPassed = 20;
-        // pc = this->read8(sp++);
-        // sp += 2;
     }
 }
 
@@ -2436,8 +2408,6 @@ void CPU::CALL(bool condition) {
         // Implicit jump
         pc = address;
 
-        // With condition cycles passed is 12
-        cyclesPassed = 24;
     }
     
 }
@@ -2454,8 +2424,6 @@ void CPU::JP(bool condition) {
     if (condition) {
         this->tick();
         pc = addr;
-        // With condition cycles passed is 16
-        cyclesPassed = 16;
     } else {
         pc += 2;
     }
@@ -2466,8 +2434,6 @@ void CPU::JR(bool condition) {
     if (condition) {
         pc += addr;
         this->tick();
-        // With condition cycles passed is 12
-        cyclesPassed = 12;
     }    
     pc++;
 
@@ -2603,38 +2569,6 @@ void CPU::CP(uint8_t val) {
     setZ(registers[REG_A] == val);
 }
 
-// void CPU::setHAdd(uint8_t left, uint8_t right) {
-//     setH((left & 0xF) + (right & 0xF) > 0xF);
-// }
-
-// void CPU::setHAdc(uint8_t left, uint8_t right, uint8_t carry) {
-//     setH((left & 0xF) + (right & 0xF) + carry > 0xF);
-// }
-
-// void CPU::setHSub(uint8_t left, uint8_t right) {
-//     setH((left & 0xF) < (right & 0xF));
-// }
-
-// void CPU::setHSbc(uint8_t left, uint8_t right, uint8_t carry) {
-//     setH((left & 0xF) < ((right & 0xF) + carry));
-// }
-
-// void CPU::setCAdd(uint8_t left, uint8_t right) {
-//     setC((left + right) > 0xFF);
-// }
-
-// void CPU::setCAdc(uint8_t left, uint8_t right, uint8_t carry) {
-//     setC((left + right + carry) > 0xFF);
-// }
-
-// void CPU::setCSub(uint8_t left, uint8_t right) {
-//     setC(left < right);
-// }
-
-// void CPU::setCSbc(uint8_t left, uint8_t right, uint8_t carry) {
-//     setC(left < (right + carry));
-// }
-
 uint8_t CPU::RES(uint8_t pos, uint8_t reg) {
     uint8_t mask = ~(1 << pos);
     
@@ -2740,31 +2674,6 @@ void CPU::BIT(uint8_t pos, uint8_t reg) {
     setZ((reg & (0x01 << pos)) == 0);
 }
 
-std::string CPU::debug() {
-    uint8_t opcode = mmu->readPeek(pc);
-    // std::cout << i << " | ";
-    std::ostringstream ss;
-    ss << std::hex << std::uppercase << std::setfill('0')
-        << "A:"  << std::setw(2) <<  (int)registers[REG_A] << " "
-        << "F:"  << std::setw(2) <<  (int)registers[REG_F] << " "
-        << "B:"  << std::setw(2) <<  (int)registers[REG_B] << " "
-        << "C:"  << std::setw(2) <<  (int)registers[REG_C] << " "
-        << "D:"  << std::setw(2) <<  (int)registers[REG_D] << " "
-        << "E:"  << std::setw(2) <<  (int)registers[REG_E] << " "
-        << "H:"  << std::setw(2) <<  (int)registers[REG_H] << " "
-        << "L:"  << std::setw(2) <<  (int)registers[REG_L] << " "
-        << "SP:" << std::setw(4) << sp << " "
-        << "PC:" << std::setw(4) << pc << " "
-        << "PCMEM:"
-        << std::setw(2) << (int)opcode << ","
-        << std::setw(2) << (int)mmu->readPeek(pc + 1) << ","
-        << std::setw(2) << (int)mmu->readPeek(pc + 2) << ","
-        << std::setw(2) << (int)mmu->readPeek(pc + 3)
-        << std::dec << "\n";
-
-    return ss.str();
-}
-
 bool CPU::getDoubleSpeed()
 {
     return doubleSpeed;
@@ -2774,7 +2683,6 @@ bool CPU::getDoubleSpeed()
 
 void CPU::handleInterrupts() {
 
-    interruptCycles = 0;
     uint8_t iFlag = mmu->getIF();
     uint8_t ie = mmu->getIE();
     uint8_t pending = iFlag & ie;
@@ -2820,6 +2728,4 @@ void CPU::handleInterrupts() {
     // Set address to handler
     pc = address;
     this->tick();
-    interruptCycles = 20;
-
 }

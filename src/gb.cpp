@@ -53,7 +53,7 @@ void gb::run(const char *filename) {
     uint8_t frameRateIndex = 0;
     uint32_t ticksPerFrame = 1000 / framerate[0];
 
-    while (running) {    
+    while (running) {
         if (!gpu.isFrameReady()) {
             cpu.execute();
         } else {
@@ -86,24 +86,9 @@ void gb::run(const char *filename) {
             gpu.setFrameReady(false);
         }
         
-        
-  
-
-        // Debugging -> checks if cycles match expected cycles TODO: Remove
-        // if (cpu.cb) {
-        //     if ((int)cpu.cyclesPassed + cpu.interruptCycles != cpu.cycles && !cpu.none) {
-        //         std::cout << std::hex << std::uppercase << std::setfill('0') << std::setw(2) << "CB" << (int)cpu.op << " | " << std::dec << cpu.cycles << "-" <<  (int)cpu.cyclesPassed << " \n";
-                
-        //     }
-        // } else {
-        //     if ((int)cpu.cyclesPassed + cpu.interruptCycles != cpu.cycles && !cpu.none) {
-        //         std::cout << std::hex << std::uppercase << std::setfill('0') << std::setw(2) <<  (int)cpu.op << " | " << std::dec << cpu.cycles << "-" <<  (int)cpu.cyclesPassed << " \n";
-        //     }
-        // }
 
     }
 
-    // file.close();
 
 }
 
