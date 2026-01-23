@@ -78,12 +78,9 @@ void Timer::tick() {
     // Loop through each individual cycle passed per cpu operation
     for (uint32_t i = 0; i < 4; ++i) {
         bool preTimerCheck = timerControlCheck();
-        
 
         DIV++;
         
-        // DIV = (cycles >> 8);
-
         bool postTimerCheck = timerControlCheck();
 
         if (preTimerCheck && !postTimerCheck && TIMADelay == 0) {
