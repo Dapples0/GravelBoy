@@ -12,10 +12,11 @@ CPU::CPU() {
 CPU::~CPU() {
 }
 
-void CPU::connect(MMU *mmu, Timer *timer, GPU *gpu) {
+void CPU::connect(MMU *mmu, Timer *timer, GPU *gpu, APU *apu) {
     this->mmu = mmu;
     this->timer = timer;
     this->gpu = gpu;
+    this->apu = apu;
 }
 
 void CPU::execute() {

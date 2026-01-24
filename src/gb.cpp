@@ -15,7 +15,7 @@ gb::gb() : cpu(), apu(), gpu(), joypad(), mmu(), timer(), interrupt() {
     // mmu = MMU();
     // timer = Timer();
 
-    cpu.connect(&mmu, &timer, &gpu);
+    cpu.connect(&mmu, &timer, &gpu, &apu);
     mmu.connect(&gpu, &joypad, &timer, &apu, &interrupt);
     timer.connect(&interrupt);
     gpu.connect(&interrupt);
