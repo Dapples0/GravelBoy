@@ -2,6 +2,7 @@
 #define SQUARESWEEPCHANNEL_H
 
 #include <cstdint>
+#include <array>
 
 class SquareSweepChannel {
     public:
@@ -16,6 +17,10 @@ class SquareSweepChannel {
         void tickLength();
         void tickEnv();
         void tickSweep();
+
+        uint8_t getOutputVolume();
+
+        bool isActive();
     private:
         uint8_t NR10 = 0x80; // Channel 1 Sweep
         uint8_t NR11 = 0xBF; // Channel 1 Length Timer & Duty Cycle
@@ -35,6 +40,16 @@ class SquareSweepChannel {
         bool sweepEnable = false;
 
         uint16_t dutyPosition = 0;
+
+        std::array<std::array<uint8_t, 8>, 4> dutyTable = {{
+            {0, 0, 0, 0, 0, 0, 0, 1}, // 12.5%
+            {0, 0, 0, 0, 0, 0, 1, 1}, // 25.0%
+            {0, 0, 0, 0, 1, 1, 1, 1}, // 50.0%
+            {1, 1, 1, 1, 1, 1, 0, 0}, // 75.0%            
+        }};
+
+        uint16_t calculateSweep();
+
 };
 
 

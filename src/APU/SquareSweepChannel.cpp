@@ -39,7 +39,8 @@ void SquareSweepChannel::write(uint16_t address, uint8_t data) {
     } else if (address == 0xFF14) {
         NR14 = data;
         if ((data & 0x80) == 0x80) {
-            active = true;
+            if ((NR12 & 0xF8) != 0) active = true;
+            
             if (lengthTimer == 0) lengthTimer = 64;
 
             envelopeTimer = NR12 & 0x07;
@@ -90,13 +91,21 @@ void SquareSweepChannel::tick() {
 }
 
 void SquareSweepChannel::tickLength() {
-    if (lengthTimer > 0 && (NR14 & 0x40) == 0x40) {
-        lengthTimer--;
-        if (lengthTimer == 0) {
-            active = false;
+    if ((NR14 & 0x40) == 0x40) {
+        if (lengthTimer > 0) {
+            lengthTimer --;
+
+            if (lengthTimer == 0) {
+                active = false;
+            }
         }
-        
     }
+    // if (lengthTimer > 0 && (NR14 & 0x40) == 0x40) {
+    //     lengthTimer--;        
+    // }
+    // if (lengthTimer == 0 ) {
+    //     active = false;
+    // }
 }
 
 void SquareSweepChannel::tickEnv() {
@@ -124,21 +133,45 @@ void SquareSweepChannel::tickSweep() {
             sweepTimer = (sweepPeriod == 0x00) ? 8 : sweepPeriod;
 
             if (sweepEnable && sweepPeriod > 0) {
-                uint8_t sweepStep = (NR10 & 0x07);
-                uint16_t newPeriod = shadowPeriodDivider >> sweepStep;
+                uint16_t newPeriod = calculateSweep();
 
-                uint8_t sweepDir = (NR10 >> 3) & 0x01;
-
-                if (sweepDir == 0x01) newPeriod = shadowPeriodDivider - newPeriod;
-                else newPeriod = shadowPeriodDivider + newPeriod;
-                
-                if (newPeriod > 2047) active = false;
-
-                if (sweepStep > 0 && active) {
-                    periodDivider = newPeriod;
+                if (newPeriod <= 2047 && (NR10 & 0x07) > 0) {
                     shadowPeriodDivider = newPeriod;
+                    periodDivider = newPeriod;
+
+                    calculateSweep();
                 }
             }
         }
     }
+}
+
+uint8_t SquareSweepChannel::getOutputVolume() {
+    uint8_t output = 0;
+    if (active && (NR12 & 0xF8) != 0) {
+        uint8_t duty = (NR11 >> 6) & 0x03;
+        output = volume * dutyTable[duty][dutyPosition];
+    }
+
+    return output;
+}
+
+bool SquareSweepChannel::isActive()
+{
+return active;
+}
+
+uint16_t SquareSweepChannel::calculateSweep() {
+    uint8_t sweepStep = (NR10 & 0x07);
+    uint8_t sweepDir = (NR10 >> 3) & 0x01;
+
+    uint16_t newPeriod = shadowPeriodDivider >> sweepStep;
+
+    if (sweepDir == 0x01) newPeriod = shadowPeriodDivider - newPeriod;
+    else newPeriod = shadowPeriodDivider + newPeriod;
+    
+    if (newPeriod > 2047) active = false;
+
+
+    return newPeriod;
 }

@@ -1,17 +1,46 @@
 #include "APU.h"
 
 APU::APU() : square1(), square2(), wave(), noise() {
+    
+    sampleBuffer.reserve(4096);
 }
 
 APU::~APU() {
+    SDL_PauseAudioDevice(audioDeviceId, 1);
+    SDL_ClearQueuedAudio(audioDeviceId);
+    SDL_CloseAudioDevice(audioDeviceId);
+}
+
+void APU::initialiseSDL() {
+    SDL_AudioSpec audioSpec;
+    SDL_AudioSpec obtainedSpec;
+    SDL_zero(audioSpec);
+    SDL_zero(obtainedSpec);
+
+    audioSpec.freq = 44100;
+    audioSpec.format = AUDIO_F32SYS;
+    audioSpec.channels = 2;
+    audioSpec.samples = 512;
+    audioSpec.callback = nullptr;
+
+    audioDeviceId = SDL_OpenAudioDevice(NULL, 0, &audioSpec, &obtainedSpec, 0);
+
+    SDL_PauseAudioDevice(audioDeviceId, 0);
 }
 
 uint8_t APU::read(uint16_t address)
 {
     uint8_t res = 0xFF;
     if (address == 0xFF26) {
-        // Should update NR52 to check if lower nibbles are set
-        res = NR52;
+        res = (NR52 & 0x80) | 0x70;
+        if (square1.isActive()) res |= 0x01;
+        else res &= ~0x01;
+        if (square2.isActive()) res |= 0x02;
+        else res &= ~0x02;
+        if (wave.isActive()) res |= 0x04;
+        else res &= ~0x04;
+        if (noise.isActive()) res |= 0x08;
+        else res &= ~0x08;
     }
     // Sound Panning
     else if (address == 0xFF25) {
@@ -48,7 +77,7 @@ void APU::write(uint16_t address, uint8_t data) {
     if (address == 0xFF26) {
         bool turningOn = ((data & 0x80) == 0x80) && ((NR52 & 0x80) != 0x80);
         if (turningOn) {
-            frameSequenceCount = 8192; // May not be needed
+            frameSequenceCount = 2048; // May not be needed
             frameSequencer = 0;
         }
         if ((data & 0x80) == 0x80) {
@@ -56,6 +85,7 @@ void APU::write(uint16_t address, uint8_t data) {
         } else {
             // Clear all registers and timer (if any)
             clear();
+            
         }
         return;
     }
@@ -80,8 +110,8 @@ void APU::write(uint16_t address, uint8_t data) {
     else if (address >= 0xFF1A && address <= 0xFF1E && (NR52 & 0x80) != 0x00) {
         wave.write(address, data);
     }
-    // Noise Channel
-    else if (address >= 0xFF20 && address <= 0xFF23 && (NR52 & 0x80) != 0x00) {
+    // Noise Channel -> writes to NR41 is never ignored
+    else if ((address >= 0xFF20 && address <= 0xFF23 && (NR52 & 0x80) != 0x00) || address == 0xFF20) {
         noise.write(address, data);
     }
     // Wave Pattern RAM
@@ -149,15 +179,38 @@ void APU::tick(uint8_t cycles) {
         if (--sampleCount == 0) {
             sampleCount = 95;
 
-            // TODO mix channels 
+            float left = 0.0f;
+            float right = 0.0f;
+            uint8_t leftVol = ((NR50 >> 4) & 0x07) + 1;
+            uint8_t rightVol = (NR50 & 0x07) + 1;
+
+            // Left
+            if ((NR51 & 0x10) == 0x10) left += (float)square1.getOutputVolume();
+            if ((NR51 & 0x20) == 0x20) left += (float)square2.getOutputVolume();
+            if ((NR51 & 0x40) == 0x40) left += (float)wave.getOutputVolume();
+            if ((NR51 & 0x80) == 0x80) left += (float)noise.getOutputVolume();
+
+            left = (left * leftVol) / 8.0f;
+
+            // Right
+            if ((NR51 & 0x01) == 0x01) right += (float)square1.getOutputVolume();
+            if ((NR51 & 0x02) == 0x02) right += (float)square2.getOutputVolume();
+            if ((NR51 & 0x04) == 0x04) right += (float)wave.getOutputVolume();
+            if ((NR51 & 0x08) == 0x08) right += (float)noise.getOutputVolume();
+
+            right = (right * rightVol) / 8.0f;
+
+            sampleBuffer.push_back(left * 0.02f);
+            sampleBuffer.push_back(right * 0.02f);
         }
 
-        if (sampleBuffer.size() >= 4096) {
-            // TODO queue audio
-
-
+        if (sampleBuffer.size() >= 512) {
+            if (SDL_GetQueuedAudioSize(audioDeviceId) < 8192 * sizeof(float)) {
+                SDL_QueueAudio(audioDeviceId, sampleBuffer.data(), sampleBuffer.size()*sizeof(float));
+            }
 
             sampleBuffer.clear();
+           
         }
 
     }

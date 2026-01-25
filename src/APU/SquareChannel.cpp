@@ -35,7 +35,8 @@ void SquareChannel::write(uint16_t address, uint8_t data) {
     } else if (address == 0xFF19) {
         NR24 = data;
         if ((data & 0x80) == 0x80) {
-            active = true;
+            if ((NR22 & 0xF8) != 0) active = true;
+            
 
             if (lengthTimer == 0) lengthTimer = 64;
 
@@ -54,10 +55,10 @@ void SquareChannel::write(uint16_t address, uint8_t data) {
 }
 
 void SquareChannel::clear() {
-    NR21 = 0x3F;
+    NR21 = 0x00;
     NR22 = 0x00;
-    NR23 = 0xFF;
-    NR24 = 0xBF;
+    NR23 = 0x00;
+    NR24 = 0x00;
 
     active = false;
     lengthTimer = 0;
@@ -79,12 +80,14 @@ void SquareChannel::tick() {
 }
 
 void SquareChannel::tickLength() {
-    if (lengthTimer > 0 && (NR24 & 0x40) == 0x40) {
-        lengthTimer--;
-        if (lengthTimer == 0) {
-            active = false;
+    if ((NR24 & 0x40) == 0x40) {
+        if (lengthTimer > 0) {
+            lengthTimer --;
+
+            if (lengthTimer == 0) {
+                active = false;
+            }
         }
-        
     }
 }
 
@@ -102,4 +105,19 @@ void SquareChannel::tickEnv() {
 
 
     }
+}
+
+uint8_t SquareChannel::getOutputVolume() {
+    uint8_t output = 0;
+    if (active && (NR22 & 0xF8) != 0) {
+        uint8_t duty = (NR21 >> 6) & 0x03;
+        if (dutyTable[duty][dutyPosition]) output = volume;
+    }
+
+    return output;
+}
+
+bool SquareChannel::isActive()
+{
+    return active;
 }

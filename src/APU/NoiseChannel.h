@@ -17,6 +17,9 @@ class NoiseChannel {
         void tickLength();
         void tickEnv();
         
+        uint8_t getOutputVolume();
+
+        bool isActive();
     private:
         uint8_t NR41 = 0xFF; // Channel 4 Length Timer
         uint8_t NR42 = 0x00; // Channel 4 Volume & Envelope

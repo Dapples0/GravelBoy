@@ -35,7 +35,8 @@ void NoiseChannel::write(uint16_t address, uint8_t data) {
     } else if (address == 0xFF23) {
         NR44 = data;
         if ((data & 0x80) == 0x80) {
-            active = true;
+            if ((NR42 & 0xF8) != 0) active = true;
+            
 
             if (lengthTimer == 0) lengthTimer = 64;
 
@@ -55,17 +56,18 @@ void NoiseChannel::write(uint16_t address, uint8_t data) {
 }
 
 void NoiseChannel::clear() {
-    NR41 = 0xFF;
+    active = false;
+    NR41 = 0x00;
     NR42 = 0x00;
     NR43 = 0x00;
-    NR44 = 0xFB;
+    NR44 = 0x00;
 
     timer = 0;
     lengthTimer = 0;
     envelopeTimer = 0;
     periodDivider = 0;
     volume = 0;
-    lfsr = 0x7FFF; // Not sure if all bits should be cleared or reset
+    lfsr = 0x7FFF;
 }
 
 void NoiseChannel::tick() {
@@ -74,7 +76,7 @@ void NoiseChannel::tick() {
         if (timer == 0) {
             uint8_t clockDivider = NR43 & 0x07;
             uint8_t clockShift = (NR43 >> 4) & 0x0F;
-            uint16_t divisor = (clockDivider == 0) ? 8 : 16 * clockDivider;
+            uint16_t divisor = (clockDivider == 0) ? 8 : 16 * (uint16_t)clockDivider;
             timer = divisor << clockShift;
 
 
@@ -90,12 +92,14 @@ void NoiseChannel::tick() {
 }
 
 void NoiseChannel::tickLength() {
-    if (lengthTimer > 0 && (NR44 & 0x40) == 0x40) {
-        lengthTimer--;
-        if (lengthTimer == 0) {
-            active = false;
+    if ((NR44 & 0x40) == 0x40) {
+        if (lengthTimer > 0) {
+            lengthTimer --;
+
+            if (lengthTimer == 0) {
+                active = false;
+            }
         }
-        
     }
 }
 
@@ -108,8 +112,21 @@ void NoiseChannel::tickEnv() {
         if (envelopeTimer == 0) {
             envelopeTimer = period;
             if ((NR42 & 0x08) == 0x08 && volume < 15) volume++;
-            else if ((NR42 & 0x08) == 0x08 && volume > 0) volume--;
+            else if ((NR42 & 0x08) != 0x08 && volume > 0) volume--;
         }
 
     }
+}
+
+uint8_t NoiseChannel::getOutputVolume() {
+    uint8_t output = 0;
+    if (active && (NR42 & 0xF8) != 0x00 && (lfsr & 0x01) == 0x00) {
+        output = volume;
+    }
+    return output;
+}
+
+bool NoiseChannel::isActive()
+{
+    return active;
 }

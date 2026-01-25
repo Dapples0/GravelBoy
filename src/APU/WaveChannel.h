@@ -15,6 +15,10 @@ class WaveChannel {
         void clear();
         void tick();
         void tickLength();
+
+        uint8_t getOutputVolume();
+
+        bool isActive();
     private:
         uint8_t NR30 = 0x7F; // Channel 3 DAC Enable
         uint8_t NR31 = 0xFF;// Channel 3 Length Timer
@@ -28,7 +32,6 @@ class WaveChannel {
         uint16_t lengthTimer = 0;
         uint16_t periodDivider = 0;
         uint8_t wavePosition = 0;
-        uint8_t volume = 0;
 
 };
 

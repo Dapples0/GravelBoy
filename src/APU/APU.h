@@ -7,6 +7,8 @@
 #include "WaveChannel.h"
 #include <cstdint>
 #include <vector>
+#include <SDL2/SDL.h>
+#include <iostream>
 
 
 class APU {
@@ -18,6 +20,8 @@ class APU {
         void write(uint16_t address, uint8_t data);
 
         void tick(uint8_t cycles);
+
+        void initialiseSDL();
     private:
         uint8_t NR52 = 0xF1; // Audio Master Control
         uint8_t NR51 = 0xF3; // Sound Panning
@@ -35,6 +39,8 @@ class APU {
         uint32_t sampleCount = 95;
 
         std::vector<float> sampleBuffer;
+        
+        SDL_AudioDeviceID audioDeviceId;
         
 };
 
