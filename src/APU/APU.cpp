@@ -190,7 +190,7 @@ void APU::tick(uint8_t cycles) {
             if ((NR51 & 0x40) == 0x40) left += (float)wave.getOutputVolume();
             if ((NR51 & 0x80) == 0x80) left += (float)noise.getOutputVolume();
 
-            left = (left * leftVol) / 8.0f;
+            left = (left / 4.0f) * (leftVol / 8.0f) * 0.04f;
 
             // Right
             if ((NR51 & 0x01) == 0x01) right += (float)square1.getOutputVolume();
@@ -198,10 +198,10 @@ void APU::tick(uint8_t cycles) {
             if ((NR51 & 0x04) == 0x04) right += (float)wave.getOutputVolume();
             if ((NR51 & 0x08) == 0x08) right += (float)noise.getOutputVolume();
 
-            right = (right * rightVol) / 8.0f;
+            right = (right / 4.0f) * (rightVol / 8.0f) * 0.04f;
 
-            sampleBuffer.push_back(left * 0.02f);
-            sampleBuffer.push_back(right * 0.02f);
+            sampleBuffer.push_back(left);
+            sampleBuffer.push_back(right);
         }
 
         if (sampleBuffer.size() >= 512) {
