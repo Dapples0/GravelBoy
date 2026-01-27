@@ -76,4 +76,4 @@ MBC3's RTC is not implemented correctly. So games that track how much real-time 
 ### Graphics
 To render the graphics on screen, I chose to use a scanline buffer instead of the FIFO approach. So graphical glitches wil be apparent for demos and games that require precise accuracy for its graphics.
 ### Audio
-APU implementation is very bare bones, and only passes a few of Blargg's audio tests. Most games sound fine but there is audio popping and distortions. Likewise, audio does not breaks after around a minute if the emulator is run in a WSL environment.
+APU implementation is very bare bones, and only passes a few of Blargg's audio tests. Most games sound fine but there is audio popping and distortions. Likewise, audio may break in WSL environments.
