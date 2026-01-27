@@ -4,6 +4,8 @@ A Game Boy Colour emulator written in C++ that can run CGB games and is backward
 
 Most games I've tested were in a playable state, though testing has been limited to a small handful of games and short play sessions.
 
+The emulator is locked at 60 fps on default instead of 59.7 fps. So games will run a bit faster in comparison to the actual Game Boy. 
+
 ## How to compile and run
 This program requires SDL2 and CMake should be installed. 
 
@@ -48,7 +50,7 @@ Game Speeds = [ 60, 120, 180, 240 ]
 If a game supports saves, a **saves** folder be created and the respective save will be stored there. Moreover, CGB games will have "cgb" be appended at the end of the save name to prevent DMG and CGB games from sharing the same save filenames.
 
 ## Development Notes
-The emulator runs at 60 fps instead of 59.7 fps. So games will run a bit faster in comparison to the actual Game Boy. Some hardware quirks such as the "halt-bug" have not been implemented.
+Some hardware quirks such as the "halt-bug" have not been implemented.
 
 ### Cycles and Timings
 This emulator attempts to be somewhat cycle and timing accurate. Each CPU tick, ticks 1 M-Cycle where it is then converted to either 2 T-Cycles or 4 T-Cycles - depending on if the CPU is in double speed mode or not - for the GPU and APU.
