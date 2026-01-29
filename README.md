@@ -35,8 +35,8 @@ To run the program:
 | Start | Space |
 | Up | ^ |
 | Down | v | 
-| Left | > |
-| Right | < |
+| Left | < |
+| Right | > |
 
 
 
