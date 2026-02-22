@@ -13,7 +13,7 @@ Windows systems do not need to install SDL2 as the necessary files have been pla
 
 To compile the program:
 ```
-git clone git@github.com:Dapples0/GravelBoy.git
+git clone https://github.com/Dapples0/GravelBoy.git
 mkdir build
 cd build
 cmake ..
